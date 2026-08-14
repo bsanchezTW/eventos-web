@@ -9,6 +9,72 @@
             href="/favicon.ico"
             type="image/x-icon"
         />
+        <!-- Evitar que GTM inyecte el chat de Cliengo en esta página -->
+        <style>
+            iframe[src*="cliengo"],
+            [id*="cliengo" i],
+            [class*="cliengo" i] {
+                display: none !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+            }
+        </style>
+        <script>
+            (function () {
+                var re = /cliengo/i;
+                function blocked(val) {
+                    return typeof val === "string" && re.test(val);
+                }
+                function isCliengoNode(n) {
+                    if (!n || n.nodeType !== 1) return false;
+                    var cls =
+                        n.className && n.className.toString
+                            ? n.className.toString()
+                            : "";
+                    return (
+                        blocked(n.src) ||
+                        blocked(n.href) ||
+                        blocked(n.id) ||
+                        blocked(cls)
+                    );
+                }
+
+                var srcDesc = Object.getOwnPropertyDescriptor(
+                    HTMLScriptElement.prototype,
+                    "src"
+                );
+                if (srcDesc && srcDesc.set) {
+                    Object.defineProperty(HTMLScriptElement.prototype, "src", {
+                        configurable: true,
+                        enumerable: srcDesc.enumerable,
+                        get: srcDesc.get,
+                        set: function (v) {
+                            if (blocked(v)) return;
+                            srcDesc.set.call(this, v);
+                        },
+                    });
+                }
+
+                ["appendChild", "insertBefore"].forEach(function (method) {
+                    var orig = Node.prototype[method];
+                    Node.prototype[method] = function (node) {
+                        if (isCliengoNode(node)) return node;
+                        return orig.apply(this, arguments);
+                    };
+                });
+
+                new MutationObserver(function (muts) {
+                    muts.forEach(function (m) {
+                        m.addedNodes.forEach(function (n) {
+                            if (isCliengoNode(n)) n.remove();
+                        });
+                    });
+                }).observe(document.documentElement, {
+                    childList: true,
+                    subtree: true,
+                });
+            })();
+        </script>
         <!-- Google Tag Manager -->
         <script>
             window.dataLayer = window.dataLayer || [];
