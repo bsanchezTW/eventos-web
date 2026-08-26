@@ -778,7 +778,8 @@
                 animation: twShake 0.45s ease;
             }
 
-            #invite-notice {
+            #invite-notice,
+            #ended-notice {
                 padding: 48px 40px 44px;
                 text-align: center;
             }
@@ -800,7 +801,28 @@
                 box-shadow: 0 0 30px rgba(139, 197, 64, 0.28);
             }
 
-            #invite-notice .badge {
+            .ended-icon-circle {
+                background: rgba(255, 184, 77, 0.12);
+                border: 1.5px solid rgba(255, 184, 77, 0.45);
+                box-shadow: 0 0 30px rgba(255, 184, 77, 0.22);
+            }
+
+            .badge--ended {
+                background: rgba(255, 184, 77, 0.12);
+                border: 1px solid rgba(255, 184, 77, 0.4);
+            }
+
+            .badge--ended .badge-dot {
+                background: #ffb84d;
+                box-shadow: 0 0 8px #ffb84d;
+            }
+
+            .badge--ended .badge-text {
+                color: #ffd08a;
+            }
+
+            #invite-notice .badge,
+            #ended-notice .badge {
                 margin-top: 22px;
                 margin-bottom: 0;
             }
@@ -1085,6 +1107,50 @@
                     <p class="invite-hint">
                         Revisa el correo o mensaje donde te invitaron y abre el
                         link personalizado para continuar.
+                    </p>
+                </div>
+
+                <div id="ended-notice" class="hidden">
+                    <div class="invite-icon-wrap">
+                        <div class="invite-icon-circle ended-icon-circle">
+                            <svg
+                                width="32"
+                                height="32"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#ffb84d"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <rect
+                                    x="3"
+                                    y="4"
+                                    width="18"
+                                    height="18"
+                                    rx="2"
+                                ></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                                <line x1="9" y1="15" x2="15" y2="21"></line>
+                                <line x1="15" y1="15" x2="9" y2="21"></line>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="badge badge--ended">
+                        <span class="badge-dot"></span>
+                        <span class="badge-text">Evento finalizado</span>
+                    </div>
+                    <h1 class="invite-title" id="endedTitle">
+                        Este evento ya finalizó
+                    </h1>
+                    <p class="invite-desc" id="endedDesc">
+                        El registro ya no está disponible.
+                    </p>
+                    <p class="invite-hint">
+                        Si tienes una invitación a otro evento, usa el enlace
+                        personalizado de esa invitación.
                     </p>
                 </div>
 
@@ -1990,6 +2056,44 @@
                 select.required = true;
             }
 
+            function parseFechaYmd(fechaRaw) {
+                const value = String(fechaRaw || "").trim();
+                if (!value) return null;
+                const iso = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+                if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+                const dmy = value.match(
+                    /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/,
+                );
+                if (dmy) {
+                    return `${dmy[3]}-${dmy[2].padStart(2, "0")}-${dmy[1].padStart(2, "0")}`;
+                }
+                return null;
+            }
+
+            function formatFechaDisplay(fechaRaw) {
+                const ymd = parseFechaYmd(fechaRaw);
+                if (!ymd) return String(fechaRaw || "").trim();
+                const [anio, mes, dia] = ymd.split("-");
+                return `${dia}-${mes}-${anio}`;
+            }
+
+            function ymdEnChile(date) {
+                const parts = new Intl.DateTimeFormat("en-CA", {
+                    timeZone: "America/Santiago",
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                }).formatToParts(date);
+                const get = (t) => parts.find((p) => p.type === t).value;
+                return `${get("year")}-${get("month")}-${get("day")}`;
+            }
+
+            function eventoYaFinalizo(fechaRaw) {
+                const ymd = parseFechaYmd(fechaRaw);
+                if (!ymd) return false;
+                return ymdEnChile(new Date()) > ymd;
+            }
+
             function mostrarAvisoInvitacion() {
                 document.title = "Invitación requerida | Transworld Connect";
                 document.getElementById("loading").classList.add("hidden");
@@ -1997,7 +2101,46 @@
                     .getElementById("form-container")
                     .classList.add("hidden");
                 document
+                    .getElementById("ended-notice")
+                    .classList.add("hidden");
+                document
                     .getElementById("invite-notice")
+                    .classList.remove("hidden");
+            }
+
+            function mostrarAvisoFinalizado(evento) {
+                const nombre = (evento && evento.nombre) || "";
+                const fecha = formatFechaDisplay(
+                    (evento && evento.fecha) || "",
+                );
+                document.title = nombre
+                    ? `${nombre} finalizó | Transworld Connect`
+                    : "Evento finalizado | Transworld Connect";
+
+                const titleEl = document.getElementById("endedTitle");
+                titleEl.textContent = nombre
+                    ? `${nombre} ya finalizó`
+                    : "Este evento ya finalizó";
+
+                const descEl = document.getElementById("endedDesc");
+                if (nombre && fecha) {
+                    descEl.textContent = `El registro para ${nombre} del ${fecha} ya no está disponible.`;
+                } else if (fecha) {
+                    descEl.textContent = `El registro de este evento (${fecha}) ya no está disponible.`;
+                } else {
+                    descEl.textContent =
+                        "El registro de este evento ya no está disponible.";
+                }
+
+                document.getElementById("loading").classList.add("hidden");
+                document
+                    .getElementById("form-container")
+                    .classList.add("hidden");
+                document
+                    .getElementById("invite-notice")
+                    .classList.add("hidden");
+                document
+                    .getElementById("ended-notice")
                     .classList.remove("hidden");
             }
 
@@ -2022,16 +2165,19 @@
                     const data = payload.evento || {};
                     eventoNombre = data.nombre || "";
                     eventoFechaRaw = data.fecha || "";
-                    eventoFecha = eventoFechaRaw;
+                    eventoFecha = formatFechaDisplay(eventoFechaRaw);
                     eventoLugar = data.lugar || "";
                     eventoDireccion = data.direccion || "";
 
                     if (
-                        eventoFecha.includes("-") &&
-                        eventoFecha.split("-")[0].length === 4
+                        payload.finalizado ||
+                        eventoYaFinalizo(eventoFechaRaw)
                     ) {
-                        const [anio, mes, dia] = eventoFecha.split("-");
-                        eventoFecha = `${dia}-${mes}-${anio}`;
+                        mostrarAvisoFinalizado({
+                            nombre: eventoNombre,
+                            fecha: eventoFechaRaw,
+                        });
+                        return;
                     }
 
                     document.getElementById("nombreEventoTitulo").innerText =
@@ -2277,6 +2423,13 @@
                         .catch(() => ({}));
 
                     if (!registroRes.ok || !registroPayload.ok) {
+                        if (registroPayload.finalizado) {
+                            mostrarAvisoFinalizado({
+                                nombre: eventoNombre,
+                                fecha: eventoFechaRaw,
+                            });
+                            return;
+                        }
                         throw new Error(
                             registroPayload.error ||
                                 `Error al registrar (HTTP ${registroRes.status})`,

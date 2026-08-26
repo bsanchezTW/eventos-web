@@ -4,6 +4,7 @@
  */
 const crypto = require("crypto");
 const { supabase, isConfigured } = require("./db");
+const { isEventoFinalizado } = require("./fecha");
 const {
   toTitleCaseName,
   isValidFullName,
@@ -54,6 +55,24 @@ async function getEvento(req, res) {
       return res.status(404).json({ ok: false, error: "Evento no encontrado" });
     }
 
+    const finalizado = isEventoFinalizado(evento.fecha);
+    const eventoPublico = {
+      id: evento.id,
+      nombre: evento.nombre || "",
+      fecha: evento.fecha || "",
+      lugar: evento.lugar || "",
+      direccion: evento.direccion || "",
+    };
+
+    if (finalizado) {
+      return res.json({
+        ok: true,
+        finalizado: true,
+        evento: eventoPublico,
+        bloques: [],
+      });
+    }
+
     const { data: bloques, error: bloquesError } = await supabase
       .from("evento_bloques")
       .select("id, etiqueta, orden")
@@ -65,13 +84,8 @@ async function getEvento(req, res) {
 
     return res.json({
       ok: true,
-      evento: {
-        id: evento.id,
-        nombre: evento.nombre || "",
-        fecha: evento.fecha || "",
-        lugar: evento.lugar || "",
-        direccion: evento.direccion || "",
-      },
+      finalizado: false,
+      evento: eventoPublico,
       bloques: bloques || [],
     });
   } catch (err) {
@@ -126,13 +140,20 @@ async function registrar(req, res) {
   try {
     const { data: evento, error: eventoError } = await supabase
       .from("eventos")
-      .select("id")
+      .select("id, fecha")
       .eq("id", eventoId)
       .maybeSingle();
 
     if (eventoError) throw eventoError;
     if (!evento) {
       return res.status(404).json({ ok: false, error: "Evento no encontrado" });
+    }
+    if (isEventoFinalizado(evento.fecha)) {
+      return res.status(410).json({
+        ok: false,
+        finalizado: true,
+        error: "Este evento ya finalizó. El registro no está disponible.",
+      });
     }
 
     const { data: duplicados, error: dupError } = await supabase.rpc(
