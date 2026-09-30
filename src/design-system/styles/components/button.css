@@ -1,0 +1,269 @@
+/* Botones — todos en píldora (radius 999px). Hover: solo cambia el fondo. */
+.tw-btn {
+  --tw-btn-bg: var(--tw-color-brand);
+  --tw-btn-bg-hover: var(--tw-color-brand-hover);
+  --tw-btn-fg: var(--tw-color-text-on-brand);
+  --tw-btn-border: transparent;
+  --tw-btn-shadow: none;
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tw-space-2);
+  height: var(--tw-control-md);
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--tw-radius-pill);
+  background: var(--tw-btn-bg);
+  color: var(--tw-btn-fg);
+  box-shadow: var(--tw-btn-shadow);
+  font-family: var(--tw-font-sans);
+  font-size: var(--tw-text-xs);
+  font-weight: var(--tw-weight-bold);
+  line-height: 1;
+  letter-spacing: var(--tw-tracking-button);
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--tw-duration-fast) var(--tw-ease),
+    color var(--tw-duration-fast) var(--tw-ease),
+    border-color var(--tw-duration-fast) var(--tw-ease);
+}
+
+.tw-btn:hover {
+  background: var(--tw-btn-bg-hover);
+  color: var(--tw-btn-fg-hover, var(--tw-btn-fg));
+  border-color: var(--tw-btn-border-hover, var(--tw-btn-border));
+}
+
+/* Solo estas variantes llevan borde (como en el template) */
+.tw-btn--on-dark,
+.tw-btn--outline,
+.tw-btn--outline-invert,
+.tw-btn--accent-outline {
+  border: 1px solid var(--tw-btn-border);
+}
+
+.tw-btn .tw-icon {
+  flex-shrink: 0;
+}
+
+/* Etiquetas largas ("↳ Parte de: …") se recortan en vez de desbordar en pantallas angostas */
+.tw-btn {
+  max-width: 100%;
+}
+
+.tw-btn__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tw-btn--sm {
+  gap: var(--tw-space-1-5);
+}
+
+.tw-btn--sm .tw-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Peso medio para acciones de navegación secundaria ("← Volver", "Inscribir a otra persona") */
+.tw-btn--medium {
+  font-weight: var(--tw-weight-semibold);
+}
+
+/* Tamaños */
+.tw-btn--xs {
+  height: auto;
+  padding: 12px 20px;
+}
+
+.tw-btn--sm {
+  height: var(--tw-control-sm);
+  padding: 0 18px;
+}
+
+.tw-btn--lg {
+  height: var(--tw-control-lg);
+  padding: 0 28px;
+  font-size: 14px;
+  letter-spacing: 0;
+}
+
+.tw-btn--xl {
+  height: var(--tw-control-xl);
+  padding: 0 30px;
+  font-size: var(--tw-text-sm);
+  letter-spacing: 0;
+}
+
+.tw-btn--2xl {
+  height: var(--tw-control-2xl);
+  padding: 0 30px;
+  font-size: var(--tw-text-sm);
+  letter-spacing: 0;
+}
+
+.tw-btn--block {
+  width: 100%;
+}
+
+.tw-btn--wide {
+  padding: 0 28px;
+}
+
+/* Variantes */
+/* Sombra lime solo en CTAs grandes (hero y envío de formulario), como en el template */
+.tw-btn--accent {
+  --tw-btn-bg: var(--tw-color-accent);
+  --tw-btn-bg-hover: var(--tw-color-accent-hover);
+  --tw-btn-fg: var(--tw-color-text-on-accent);
+}
+
+.tw-btn--accent.tw-btn--xl {
+  --tw-btn-shadow: var(--tw-shadow-button-accent);
+}
+
+.tw-btn--accent.tw-btn--lg {
+  --tw-btn-bg-hover: var(--tw-color-accent-strong-hover);
+  --tw-btn-shadow: var(--tw-shadow-button-accent-sm);
+}
+
+/* Botón navy con elevación (CTA del header) */
+.tw-btn--elevated {
+  --tw-btn-shadow: var(--tw-shadow-button-brand);
+}
+
+.tw-btn--on-dark {
+  --tw-btn-bg: var(--tw-tint-white-10);
+  --tw-btn-bg-hover: var(--tw-tint-white-20);
+  --tw-btn-fg: var(--tw-white);
+  --tw-btn-border: var(--tw-tint-white-32);
+}
+
+.tw-btn--ghost {
+  --tw-btn-bg: var(--tw-tint-brand-7);
+  --tw-btn-bg-hover: var(--tw-tint-brand-13);
+  --tw-btn-fg: var(--tw-color-brand);
+}
+
+.tw-btn--outline {
+  --tw-btn-bg: var(--tw-color-surface);
+  --tw-btn-bg-hover: var(--tw-color-surface-sunken);
+  --tw-btn-fg: var(--tw-color-brand);
+  --tw-btn-border: var(--tw-border-default);
+}
+
+/* "Ver todos los eventos": outline que se invierte a navy en hover */
+.tw-btn--outline-invert {
+  --tw-btn-bg: var(--tw-color-surface);
+  --tw-btn-bg-hover: var(--tw-color-brand);
+  --tw-btn-fg: var(--tw-color-brand);
+  --tw-btn-fg-hover: var(--tw-white);
+  --tw-btn-border: var(--tw-border-default);
+  --tw-btn-border-hover: var(--tw-color-brand);
+  --tw-btn-shadow: 0 8px 24px var(--tw-tint-brand-6);
+}
+
+.tw-btn--light {
+  --tw-btn-bg: var(--tw-color-surface);
+  --tw-btn-bg-hover: var(--tw-color-surface-sunken);
+  --tw-btn-fg: var(--tw-color-brand);
+  --tw-btn-shadow: var(--tw-shadow-button-light);
+}
+
+.tw-btn--soft-accent {
+  --tw-btn-bg: var(--tw-tint-accent-20);
+  --tw-btn-bg-hover: var(--tw-tint-accent-28);
+  --tw-btn-fg: var(--tw-color-brand);
+}
+
+.tw-btn--accent-outline {
+  --tw-btn-bg: var(--tw-tint-accent-16);
+  --tw-btn-bg-hover: var(--tw-tint-accent-28);
+  --tw-btn-fg: var(--tw-color-text-accent);
+  --tw-btn-border: var(--tw-tint-accent-40);
+  font-weight: var(--tw-weight-semibold);
+}
+
+.tw-btn--text {
+  --tw-btn-bg: transparent;
+  --tw-btn-bg-hover: var(--tw-tint-brand-5);
+  --tw-btn-fg: var(--tw-color-text-muted);
+  font-weight: var(--tw-weight-semibold);
+}
+
+/* Estados */
+.tw-btn:disabled,
+.tw-btn[aria-disabled="true"] {
+  --tw-btn-bg: var(--tw-gray-100);
+  --tw-btn-bg-hover: var(--tw-gray-100);
+  --tw-btn-fg: var(--tw-color-text-muted);
+  --tw-btn-fg-hover: var(--tw-color-text-muted);
+  --tw-btn-border: transparent;
+  --tw-btn-border-hover: transparent;
+  --tw-btn-shadow: none;
+  cursor: not-allowed;
+}
+
+.tw-btn[aria-busy="true"] {
+  cursor: progress;
+  color: transparent;
+}
+
+.tw-btn[aria-busy="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--tw-btn-fg);
+  border-right-color: transparent;
+  animation: tw-spin 0.7s linear infinite;
+}
+
+/* Botón circular de ícono (slider, lightbox, menú) */
+.tw-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: var(--tw-control-icon);
+  height: var(--tw-control-icon);
+  padding: 0;
+  border-radius: var(--tw-radius-pill);
+  border: 1px solid var(--tw-border-input);
+  background: var(--tw-color-surface);
+  color: var(--tw-color-brand);
+  cursor: pointer;
+  transition: background-color var(--tw-duration-fast) var(--tw-ease);
+}
+
+.tw-icon-btn:hover {
+  background: var(--tw-color-surface-sunken);
+}
+
+.tw-icon-btn--on-dark {
+  border-color: var(--tw-border-on-dark);
+  background: var(--tw-tint-white-8);
+  color: var(--tw-white);
+}
+
+.tw-icon-btn--on-dark:hover {
+  background: var(--tw-tint-white-20);
+}
+
+.tw-icon-btn--ghost {
+  border-color: transparent;
+  background: var(--tw-tint-brand-5);
+}
+
+.tw-icon-btn--sm {
+  width: 44px;
+  height: 44px;
+}

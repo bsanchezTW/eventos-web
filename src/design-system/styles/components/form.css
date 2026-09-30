@@ -1,0 +1,230 @@
+/* Formularios: label, input, select, checkbox, búsqueda */
+.tw-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+fieldset.tw-field {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.tw-field__label {
+  display: block;
+  padding: 0;
+  margin-bottom: 7px;
+  font-size: var(--tw-text-2xs);
+  font-weight: var(--tw-weight-semibold);
+  line-height: 1;
+  letter-spacing: var(--tw-tracking-label);
+  color: var(--tw-color-text-label);
+}
+
+.tw-field__hint,
+.tw-field__error {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.tw-field__hint {
+  color: var(--tw-color-text-muted);
+}
+
+.tw-field__error {
+  color: var(--tw-color-danger);
+  font-weight: var(--tw-weight-medium);
+}
+
+.tw-input,
+.tw-select {
+  width: 100%;
+  height: var(--tw-control-input);
+  padding: 0 16px;
+  border: 1px solid var(--tw-border-input);
+  border-radius: var(--tw-radius-md);
+  background: var(--tw-color-surface-input);
+  color: var(--tw-color-text-title);
+  font-size: var(--tw-text-base);
+  line-height: 1;
+  transition: border-color var(--tw-duration-fast) var(--tw-ease);
+}
+
+.tw-input::placeholder {
+  color: var(--tw-color-text-muted);
+  opacity: 1;
+}
+
+.tw-input:focus,
+.tw-select:focus {
+  outline: 2px solid var(--tw-focus-ring);
+  outline-offset: 1px;
+  border-color: var(--tw-color-brand);
+}
+
+.tw-input[aria-invalid="true"],
+.tw-select[aria-invalid="true"] {
+  border-color: var(--tw-color-danger);
+}
+
+.tw-input:disabled,
+.tw-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tw-input--lg {
+  height: 50px;
+  padding: 0 18px;
+  border-radius: var(--tw-space-4);
+  font-size: var(--tw-text-md);
+}
+
+.tw-select {
+  padding: 0 40px 0 14px;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23293f68' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  cursor: pointer;
+}
+
+/* Prefijo + control en una fila (código de país + teléfono) */
+.tw-input-group {
+  display: grid;
+  grid-template-columns: minmax(108px, max-content) minmax(0, 1fr);
+  gap: var(--tw-space-2);
+}
+
+.tw-form-grid {
+  display: grid;
+  gap: var(--tw-space-3);
+}
+
+.tw-form-grid--2 {
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
+}
+
+/*
+ * Barra de filtros para listados: búsqueda + selects en una fila (desktop);
+ * en móvil la búsqueda ocupa la fila completa y los selects van de a dos.
+ */
+.tw-filter-bar {
+  display: grid;
+  gap: var(--tw-space-3);
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+}
+
+@media (max-width: 640px) {
+  .tw-filter-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tw-filter-bar > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Checkbox con texto */
+.tw-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--tw-space-2-5);
+  cursor: pointer;
+  font-size: var(--tw-text-xs);
+  line-height: var(--tw-leading-body);
+  color: var(--tw-color-text-body);
+}
+
+.tw-check input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: var(--tw-color-accent);
+  cursor: pointer;
+}
+
+/* Campo de búsqueda con ícono */
+.tw-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.tw-search > .tw-icon {
+  position: absolute;
+  left: 16px;
+  color: var(--tw-color-text-muted);
+  pointer-events: none;
+}
+
+.tw-search .tw-input {
+  padding-left: 44px;
+}
+
+/* Barra de búsqueda destacada (hero): input + botón en una píldora blanca */
+.tw-searchbar {
+  display: flex;
+  align-items: center;
+  gap: var(--tw-space-2);
+  width: 100%;
+  max-width: 560px;
+  padding: 5px 5px 5px 20px;
+  border-radius: var(--tw-radius-pill);
+  background: var(--tw-color-surface);
+  box-shadow: 0 18px 40px rgba(21, 32, 52, 0.28);
+}
+
+.tw-searchbar > .tw-icon {
+  flex-shrink: 0;
+  color: var(--tw-color-brand);
+}
+
+.tw-searchbar__input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--tw-color-text-title);
+  font-size: var(--tw-text-base);
+}
+
+.tw-searchbar__input::placeholder {
+  color: var(--tw-color-text-muted);
+  opacity: 1;
+}
+
+.tw-searchbar__input:focus {
+  outline: none;
+}
+
+.tw-searchbar:focus-within {
+  outline: 2px solid var(--tw-focus-ring-on-dark);
+  outline-offset: 3px;
+}
+
+.tw-searchbar .tw-btn {
+  flex-shrink: 0;
+}
+
+/* En pantallas angostas el botón queda solo con ícono; la etiqueta sigue siendo su nombre accesible */
+@media (max-width: 480px) {
+  .tw-searchbar .tw-btn__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .tw-searchbar .tw-btn {
+    width: 44px;
+    padding: 0;
+  }
+}

@@ -1,0 +1,275 @@
+/*
+ * Transworld Design System — tokens
+ *
+ * Fuente de verdad visual de la aplicación. Valores extraídos del template
+ * "Agenda de Eventos Transworld" (Claude Design) y su "Sistema de Diseño".
+ * Los componentes consumen SIEMPRE los tokens semánticos (--tw-color-text-body,
+ * --tw-surface…), nunca la paleta base ni hex sueltos.
+ *
+ * Breakpoints (no se pueden usar como var() en @media; referencia):
+ *   sm 640px · md 768px · lg 1024px · xl 1240px (= contenedor)
+ */
+
+:root {
+  /* ── Paleta base ─────────────────────────────────────────────── */
+  --tw-navy-950: #152034; /* footer, overlay oscuro del hero */
+  --tw-navy-900: #12263a; /* títulos sobre blanco */
+  --tw-navy-700: #1f2f4e; /* hover navy */
+  --tw-navy-600: #293f68; /* marca */
+
+  --tw-lime-300: #b9e06a; /* kicker sobre navy */
+  --tw-lime-400: #aef839; /* acento */
+  --tw-lime-500: #a3d637; /* hover acento */
+  --tw-lime-600: #83b325; /* hover acento (formulario) */
+
+  /* Oliva: texto sobre lime translúcido. Template: #4e7d0f / #5f8f14.
+     Oscurecido a #48740c para cumplir AA (4.5:1) también sobre el fondo base. */
+  --tw-olive-700: #48740c;
+
+  --tw-gray-25: #fbfcfd;  /* fondo de inputs */
+  --tw-gray-50: #f6f8fa;  /* hover de botones claros */
+  --tw-gray-75: #f2f5f8;  /* chips de audiencia, código */
+  --tw-gray-100: #eef1f4; /* fondo base / divisores */
+  --tw-gray-200: #dde3e9; /* borde de inputs */
+  --tw-gray-300: #e4e9ee; /* rayado placeholder */
+  --tw-gray-400: #9aa6b2; /* deshabilitado / decorativo (no apto para texto informativo) */
+  --tw-gray-500: #6c7783; /* texto muted (solo sobre superficies blancas) */
+  --tw-gray-550: #5f6b77; /* cuerpo — template #6c7783, oscurecido para AA sobre el fondo base */
+  --tw-gray-600: #4a5a6a; /* texto de píldoras inactivas */
+  --tw-gray-700: #3c4a58; /* labels de formulario */
+
+  --tw-red-600: #c0392b;    /* error */
+  --tw-orange-700: #b5581f; /* urgencia ("Últimos cupos") */
+  --tw-white: #ffffff;
+
+  /* ── Color semántico ─────────────────────────────────────────── */
+  --tw-color-bg: var(--tw-gray-100);
+  --tw-color-surface: var(--tw-white);
+  --tw-color-surface-sunken: var(--tw-gray-50);
+  --tw-color-surface-input: var(--tw-gray-25);
+  --tw-color-surface-dark: var(--tw-navy-600);
+  --tw-color-surface-darker: var(--tw-navy-950);
+
+  --tw-color-brand: var(--tw-navy-600);
+  --tw-color-brand-hover: var(--tw-navy-700);
+  --tw-color-accent: var(--tw-lime-400);
+  --tw-color-accent-hover: var(--tw-lime-500);
+  --tw-color-accent-strong-hover: var(--tw-lime-600);
+
+  --tw-color-text-heading: var(--tw-navy-600);
+  --tw-color-text-title: var(--tw-navy-900);
+  --tw-color-text-body: var(--tw-gray-550);
+  --tw-color-text-muted: var(--tw-gray-500);
+  --tw-color-text-disabled: var(--tw-gray-400);
+  --tw-color-text-label: var(--tw-gray-700);
+  --tw-color-text-control: var(--tw-gray-600);
+  --tw-color-text-accent: var(--tw-olive-700);
+  --tw-color-text-on-brand: var(--tw-white);
+  --tw-color-text-on-accent: var(--tw-navy-600);
+  --tw-color-text-on-dark: rgba(255, 255, 255, 0.82);
+  --tw-color-text-on-dark-muted: rgba(255, 255, 255, 0.65);
+  --tw-color-text-on-dark-accent: var(--tw-lime-300);
+  --tw-color-danger: var(--tw-red-600);
+  --tw-color-warning: var(--tw-orange-700);
+
+  /* Tintes translúcidos (el sistema usa navy/lime con alpha en vez de grises) */
+  --tw-tint-brand-5: rgba(41, 63, 104, 0.05);
+  --tw-tint-brand-6: rgba(41, 63, 104, 0.06);
+  --tw-tint-brand-7: rgba(41, 63, 104, 0.07);
+  --tw-tint-brand-9: rgba(41, 63, 104, 0.09);
+  --tw-tint-brand-13: rgba(41, 63, 104, 0.13);
+  --tw-tint-accent-16: rgba(174, 248, 57, 0.16);
+  --tw-tint-accent-18: rgba(174, 248, 57, 0.18);
+  --tw-tint-accent-20: rgba(174, 248, 57, 0.2);
+  --tw-tint-accent-28: rgba(174, 248, 57, 0.28);
+  --tw-tint-accent-40: rgba(174, 248, 57, 0.4);
+  --tw-tint-accent-50: rgba(174, 248, 57, 0.5);
+  --tw-tint-danger-8: rgba(192, 57, 43, 0.08);
+  --tw-tint-white-8: rgba(255, 255, 255, 0.08);
+  --tw-tint-white-10: rgba(255, 255, 255, 0.1);
+  --tw-tint-white-14: rgba(255, 255, 255, 0.14);
+  --tw-tint-white-20: rgba(255, 255, 255, 0.2);
+  --tw-tint-white-32: rgba(255, 255, 255, 0.32);
+
+  /* Bordes: siempre navy translúcido */
+  --tw-border-subtle: rgba(41, 63, 104, 0.05);
+  --tw-border-soft: rgba(41, 63, 104, 0.09);
+  --tw-border-default: rgba(41, 63, 104, 0.14);
+  --tw-border-strong: rgba(41, 63, 104, 0.18);
+  --tw-border-input: var(--tw-gray-200);
+  --tw-border-divider: var(--tw-gray-100);
+  --tw-border-on-dark: rgba(255, 255, 255, 0.3);
+  --tw-border-footer: rgba(255, 255, 255, 0.13);
+
+  --tw-focus-ring: rgba(41, 63, 104, 0.35);
+  --tw-focus-ring-on-dark: rgba(174, 248, 57, 0.85);
+
+  /* Gradientes */
+  --tw-gradient-hero: linear-gradient(100deg, rgba(21, 32, 52, 0.94) 4%, rgba(41, 63, 104, 0.82) 44%, rgba(41, 63, 104, 0.35) 100%);
+  --tw-gradient-banner: linear-gradient(110deg, #293f68 10%, rgba(41, 63, 104, 0.86) 60%, rgba(21, 32, 52, 0.5) 100%);
+  --tw-gradient-caption: linear-gradient(transparent, rgba(21, 32, 52, 0.78));
+  --tw-gradient-glow: radial-gradient(circle, rgba(174, 248, 57, 0.18), transparent 70%);
+  --tw-pattern-placeholder: repeating-linear-gradient(135deg, #e4e9ee 0 9px, #f1f4f7 9px 18px);
+
+  --tw-scrim: rgba(21, 32, 52, 0.55);
+  --tw-scrim-strong: rgba(21, 32, 52, 0.72);
+  --tw-header-bg: rgba(255, 255, 255, 0.86);
+
+  /* ── Tipografía ──────────────────────────────────────────────── */
+  --tw-font-sans: "Montserrat", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --tw-font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+
+  --tw-weight-light: 300;
+  --tw-weight-regular: 400;
+  --tw-weight-medium: 500;
+  --tw-weight-semibold: 600;
+  --tw-weight-bold: 700;
+  --tw-weight-extrabold: 800;
+
+  --tw-text-display: 56px; /* H1 hero */
+  --tw-text-h1: 42px;      /* H1 detalle */
+  --tw-text-page: 36px;    /* título de página interna (galería) */
+  --tw-text-h2: 34px;      /* H2 sección */
+  --tw-text-h3: 22px;      /* H3 panel / modal */
+  --tw-text-title-lg: 20px;
+  --tw-text-title: 19px;   /* título de tarjeta */
+  --tw-text-title-sm: 17px;
+  --tw-text-lead: 17.5px;  /* cuerpo grande hero */
+  --tw-text-lead-sm: 16.5px;
+  --tw-text-md-plus: 15.5px;
+  --tw-text-md: 15px;
+  --tw-text-base: 14.5px;
+  --tw-text-sm: 13.5px;
+  --tw-text-xs: 12.5px;
+  --tw-text-2xs: 11.5px;
+  --tw-text-eyebrow: 11px;
+  --tw-text-badge: 10.5px;
+  --tw-text-micro: 10px;
+
+  --tw-leading-none: 1;
+  --tw-leading-tight: 1.06;
+  --tw-leading-snug: 1.2;
+  --tw-leading-title: 1.3;
+  --tw-leading-body: 1.5;
+  --tw-leading-relaxed: 1.62;
+
+  --tw-tracking-display: -0.035em;
+  --tw-tracking-h1: -0.03em;
+  --tw-tracking-h2: -0.025em;
+  --tw-tracking-title: -0.015em;
+  --tw-tracking-button: 0.02em;
+  --tw-tracking-label: 0.04em;
+  --tw-tracking-badge: 0.08em;
+  --tw-tracking-mono: 0.12em;
+  --tw-tracking-eyebrow: 0.16em;
+
+  /* ── Espaciado (escala usada por el template) ────────────────── */
+  --tw-space-1: 4px;
+  --tw-space-1-5: 6px;
+  --tw-space-2: 8px;
+  --tw-space-2-5: 10px;
+  --tw-space-3: 12px;
+  --tw-space-3-5: 14px;
+  --tw-space-4: 16px;
+  --tw-space-4-5: 18px;
+  --tw-space-5: 20px;
+  --tw-space-5-5: 22px;
+  --tw-space-6: 24px;
+  --tw-space-6-5: 26px;
+  --tw-space-7: 28px;
+  --tw-space-8: 34px;
+  --tw-space-9: 44px;
+  --tw-space-9-5: 40px;
+  --tw-space-10: 56px;
+  --tw-space-11: 82px;
+
+  /* ── Radios ──────────────────────────────────────────────────── */
+  --tw-radius-sm: 12px;   /* logo */
+  --tw-radius-md: 14px;   /* inputs, segmentado */
+  --tw-radius-lg: 18px;   /* bloque de fecha */
+  --tw-radius-xl: 22px;   /* stat card, tiles */
+  --tw-radius-2xl: 24px;  /* tarjetas de evento, webinars, media */
+  --tw-radius-2xl-plus: 26px; /* tarjetas informativas (detalle, formas de participar) */
+  --tw-radius-3xl: 28px;  /* paneles */
+  --tw-radius-4xl: 30px;  /* modal, bandas CTA */
+  --tw-radius-5xl: 32px;  /* banner de detalle */
+  --tw-radius-pill: 999px;
+
+  /* ── Sombras ─────────────────────────────────────────────────── */
+  --tw-shadow-card: 0 8px 24px rgba(41, 63, 104, 0.06);
+  --tw-shadow-card-hover: 0 16px 36px rgba(41, 63, 104, 0.14);
+  --tw-shadow-media-hover: 0 18px 40px rgba(41, 63, 104, 0.16);
+  --tw-shadow-panel: 0 12px 34px rgba(41, 63, 104, 0.08);
+  --tw-shadow-panel-strong: 0 14px 40px rgba(41, 63, 104, 0.1);
+  --tw-shadow-stat: 0 14px 36px rgba(41, 63, 104, 0.14);
+  --tw-shadow-button-brand: 0 6px 18px rgba(41, 63, 104, 0.22);
+  --tw-shadow-button-accent: 0 12px 30px rgba(174, 248, 57, 0.35);
+  --tw-shadow-button-accent-sm: 0 10px 24px rgba(174, 248, 57, 0.34);
+  --tw-shadow-button-light: 0 10px 26px rgba(0, 0, 0, 0.12);
+  --tw-shadow-modal: 0 30px 80px rgba(0, 0, 0, 0.3);
+
+  /* ── Controles ───────────────────────────────────────────────── */
+  --tw-control-xs: 38px; /* píldoras de nav y chips */
+  --tw-control-sm: 40px;  /* botones dentro de tarjetas */
+  --tw-control-md: 44px;  /* header, outline */
+  --tw-control-input: 46px; /* inputs y selects */
+  --tw-control-lg: 52px;  /* envío de formularios, CTA de banda */
+  --tw-control-xl: 54px;  /* hero */
+  --tw-control-2xl: 56px; /* "Ver todos" a ancho completo */
+  --tw-control-icon: 48px;
+
+  /* ── Layout ──────────────────────────────────────────────────── */
+  --tw-container: 1240px;
+  --tw-gutter: 28px;
+  --tw-section-gap: 56px;
+  --tw-section-gap-sm: 52px;
+  --tw-header-height: 72px;
+  --tw-sticky-offset: 96px;
+
+  /* ── Movimiento ──────────────────────────────────────────────── */
+  --tw-ease: ease;
+  --tw-duration-fast: 0.18s; /* botones, píldoras */
+  --tw-duration-base: 0.2s;  /* tarjetas */
+  --tw-duration-enter: 0.4s; /* tw-up */
+  --tw-duration-slide: 0.9s; /* crossfade del hero */
+  --tw-lift-sm: -2px;
+  --tw-lift-md: -3px;
+
+  /* ── Capas ───────────────────────────────────────────────────── */
+  --tw-z-raised: 5;
+  --tw-z-header: 40;
+  --tw-z-overlay: 60;
+  --tw-z-toast: 80;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --tw-gutter: 18px;
+    --tw-section-gap: 44px;
+    --tw-text-display: 36px;
+    --tw-text-h1: 30px;
+    --tw-text-h2: 27px;
+    --tw-text-lead: 16px;
+    --tw-header-height: 64px;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  :root {
+    --tw-gutter: 24px;
+    --tw-text-display: 46px;
+    --tw-text-h1: 36px;
+    --tw-text-h2: 30px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --tw-duration-fast: 0.01s;
+    --tw-duration-base: 0.01s;
+    --tw-duration-enter: 0.01s;
+    --tw-duration-slide: 0.01s;
+    --tw-lift-sm: 0px;
+    --tw-lift-md: 0px;
+  }
+}

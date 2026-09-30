@@ -1,0 +1,274 @@
+/* Hero con overlay sobre imagen, crossfade de slides, banner de detalle y banda CTA */
+.tw-hero {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: 620px;
+  overflow: hidden;
+  background: var(--tw-color-surface-dark);
+  color: var(--tw-white);
+}
+
+.tw-hero__backdrops,
+.tw-hero__backdrop {
+  position: absolute;
+  inset: 0;
+}
+
+.tw-hero__backdrop {
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity var(--tw-duration-slide) var(--tw-ease);
+}
+
+.tw-hero__backdrop.is-active {
+  opacity: 1;
+}
+
+.tw-hero__backdrop img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.04);
+}
+
+.tw-hero__backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--tw-gradient-hero);
+}
+
+.tw-hero__content {
+  position: relative;
+  padding-top: var(--tw-space-11);
+  padding-bottom: 86px;
+}
+
+/* Todos los paneles comparten celda: el alto es el del más alto (sin saltos de layout) */
+.tw-hero__track {
+  display: grid;
+}
+
+.tw-hero__panel {
+  grid-area: 1 / 1;
+  max-width: 720px;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.tw-hero__panel.is-active {
+  opacity: 1;
+  visibility: visible;
+  animation: tw-up 0.5s var(--tw-ease) both;
+}
+
+.tw-hero__kicker {
+  margin-bottom: var(--tw-space-5-5);
+}
+
+.tw-hero__title {
+  margin-bottom: var(--tw-space-4);
+}
+
+.tw-hero__body {
+  max-width: 540px;
+  min-height: 84px; /* 3 líneas reservadas: los botones no saltan entre slides */
+  margin-bottom: var(--tw-space-7);
+}
+
+.tw-hero__search {
+  margin-top: var(--tw-space-8);
+}
+
+.tw-hero__controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--tw-space-6);
+  flex-wrap: wrap;
+  margin-top: 46px;
+}
+
+.tw-hero__counter {
+  margin-left: var(--tw-space-2);
+  font-family: var(--tw-font-mono);
+  font-size: var(--tw-text-eyebrow);
+  font-weight: var(--tw-weight-medium);
+  line-height: 1;
+  letter-spacing: var(--tw-tracking-mono);
+  color: var(--tw-color-text-on-dark-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.tw-hero__nav {
+  display: flex;
+  gap: var(--tw-space-2);
+}
+
+@media (max-width: 640px) {
+  .tw-hero {
+    min-height: 0;
+  }
+
+  .tw-hero__body {
+    min-height: 0;
+  }
+
+  .tw-hero__content {
+    padding-top: var(--tw-space-9);
+    padding-bottom: 70px;
+  }
+
+  .tw-hero__search {
+    margin-top: var(--tw-space-6);
+  }
+
+  .tw-hero__controls {
+    margin-top: var(--tw-space-7);
+  }
+
+  .tw-hero__nav .tw-icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Banner de detalle: imagen al 30% + gradiente diagonal */
+.tw-banner {
+  position: relative;
+  overflow: hidden;
+  padding: var(--tw-space-9) 46px;
+  border-radius: var(--tw-radius-5xl);
+  background: var(--tw-color-surface-dark);
+  color: var(--tw-white);
+}
+
+.tw-banner__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.3;
+}
+
+.tw-banner__overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--tw-gradient-banner);
+}
+
+.tw-banner__content {
+  position: relative;
+  max-width: 760px;
+}
+
+.tw-banner__badges {
+  margin-bottom: var(--tw-space-4-5);
+}
+
+.tw-banner__title {
+  margin-bottom: var(--tw-space-3-5);
+}
+
+.tw-banner__text {
+  max-width: 600px;
+}
+
+@media (max-width: 640px) {
+  .tw-banner {
+    padding: var(--tw-space-7) var(--tw-space-5-5);
+    border-radius: var(--tw-radius-3xl);
+  }
+}
+
+/* Banda CTA full-bleed en lime o navy */
+.tw-cta-band {
+  display: grid;
+  align-items: center;
+  gap: 30px;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  padding: 38px var(--tw-space-9);
+  border-radius: var(--tw-radius-4xl);
+}
+
+.tw-cta-band--accent {
+  background: var(--tw-color-accent);
+  color: var(--tw-color-text-on-accent);
+}
+
+.tw-cta-band--brand {
+  padding-block: 40px;
+  background: var(--tw-color-surface-dark);
+  color: var(--tw-white);
+}
+
+
+.tw-cta-band__body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.tw-cta-band__title {
+  font-size: 27px;
+  font-weight: var(--tw-weight-extrabold);
+  line-height: var(--tw-leading-snug);
+  letter-spacing: var(--tw-tracking-h2);
+  text-wrap: balance;
+}
+
+.tw-cta-band__text {
+  font-size: var(--tw-text-md);
+  line-height: 1.55;
+}
+
+.tw-cta-band--brand .tw-cta-band__text {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.tw-cta-band__action {
+  position: relative;
+  justify-self: end;
+}
+
+/* Banda grande (cabecera de página, p. ej. webinars): título de sección */
+.tw-cta-band--lg {
+  padding: 40px var(--tw-space-9);
+}
+
+.tw-cta-band--lg .tw-cta-band__body {
+  gap: var(--tw-space-2-5);
+}
+
+.tw-cta-band--lg .tw-eyebrow {
+  margin-bottom: 2px;
+}
+
+.tw-cta-band--lg .tw-cta-band__title {
+  font-size: var(--tw-text-h2);
+  line-height: 1.1;
+  letter-spacing: var(--tw-tracking-h1);
+}
+
+.tw-cta-band--lg .tw-cta-band__text {
+  font-size: var(--tw-text-md-plus);
+  line-height: 1.6;
+  max-width: 560px;
+}
+
+@media (max-width: 720px) {
+  .tw-cta-band {
+    padding: var(--tw-space-7) var(--tw-space-6);
+  }
+
+  .tw-cta-band__title {
+    font-size: 23px;
+  }
+
+  .tw-cta-band__action {
+    justify-self: start;
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "name": "transworld-landing-eventos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Landing pública de la agenda de eventos Transworld, construida sobre el Design System interno",
+  "main": "src/server.js",
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test \"test/**/*.test.js\"",
+    "lint": "eslint .",
+    "typecheck": "tsc -p jsconfig.json",
+    "check": "npm run lint && npm run typecheck && npm test",
+    "fonts:sync": "node scripts/sync-fonts.js"
+  },
+  "keywords": [
+    "eventos",
+    "agenda",
+    "transworld",
+    "design-system"
+  ],
+  "author": "",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "compression": "^1.8.2",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@fontsource-variable/montserrat": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@types/compression": "^1.8.1",
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.3",
+    "eslint": "^10.11.0",
+    "globals": "^17.12.0",
+    "typescript": "^7.0.2"
+  }
+}

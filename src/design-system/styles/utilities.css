@@ -1,0 +1,44 @@
+/* Utilidades mínimas (espaciado vertical y alineación). Preferir primitivas de layout. */
+.tw-mt-1 { margin-top: var(--tw-space-1); }
+.tw-mt-1-5 { margin-top: var(--tw-space-1-5); }
+.tw-mt-2 { margin-top: var(--tw-space-2); }
+.tw-mt-3 { margin-top: var(--tw-space-3); }
+.tw-mt-4 { margin-top: var(--tw-space-4); }
+.tw-mt-5 { margin-top: var(--tw-space-5); }
+.tw-mt-6 { margin-top: var(--tw-space-6); }
+.tw-mt-4-5 { margin-top: var(--tw-space-4-5); }
+.tw-mb-2 { margin-bottom: var(--tw-space-2); }
+.tw-mb-3-5 { margin-bottom: var(--tw-space-3-5); }
+.tw-mb-5-5 { margin-bottom: var(--tw-space-5-5); }
+.tw-mb-4 { margin-bottom: var(--tw-space-4); }
+.tw-mb-5 { margin-bottom: var(--tw-space-5); }
+.tw-text-center { text-align: center; }
+.tw-w-full { width: 100%; }
+.tw-min-w-0 { min-width: 0; }
+
+/* Superficie de muestra (guía viva del sistema y demos de componentes) */
+.tw-specimen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tw-space-2-5);
+  padding: 26px;
+  border-radius: var(--tw-space-4);
+  background: var(--tw-color-surface-sunken);
+}
+
+.tw-specimen--dark {
+  background: var(--tw-color-surface-dark);
+}
+
+.tw-specimen--block {
+  display: block;
+}
+
+.tw-spec {
+  font-family: var(--tw-font-mono);
+  font-size: var(--tw-text-2xs);
+  line-height: 1.7;
+  color: var(--tw-color-text-muted);
+}

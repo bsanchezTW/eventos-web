@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "landing-eventos",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3020
+    },
+    {
+      "name": "landing-eventos-mock",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["-e", "process.env.EVENTS_SOURCE='mock';process.env.PORT='3021';import('./src/server.js')"],
+      "port": 3021
+    }
+  ]
+}

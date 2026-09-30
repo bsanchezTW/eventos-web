@@ -1,0 +1,286 @@
+/* Controles de selección: píldoras segmentadas, chips de filtro, selector segmentado y dots */
+
+/* Contenedor de píldoras (nav, tabs de mes, tabs de galería) */
+.tw-segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tw-space-1-5);
+  max-width: 100%;
+  padding: 5px;
+  border-radius: var(--tw-radius-pill);
+  background: var(--tw-tint-brand-6);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tw-segmented::-webkit-scrollbar {
+  display: none;
+}
+
+.tw-segmented--nav {
+  background: var(--tw-tint-brand-5);
+}
+
+.tw-pill {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  height: var(--tw-control-xs);
+  padding: 0 18px;
+  border: none;
+  border-radius: var(--tw-radius-pill);
+  background: transparent;
+  color: var(--tw-color-text-control);
+  font-size: var(--tw-text-xs);
+  font-weight: var(--tw-weight-semibold);
+  line-height: 1;
+  letter-spacing: var(--tw-tracking-button);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--tw-duration-fast) var(--tw-ease), color var(--tw-duration-fast) var(--tw-ease);
+}
+
+.tw-pill:hover {
+  background: var(--tw-tint-brand-7);
+  color: var(--tw-color-brand);
+}
+
+.tw-pill[aria-pressed="true"],
+.tw-pill[aria-current="page"],
+.tw-pill[aria-current="true"],
+.tw-pill[aria-selected="true"] {
+  background: var(--tw-color-brand);
+  color: var(--tw-white);
+}
+
+.tw-pill__short {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .tw-pill__long {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+
+  .tw-pill__short {
+    display: inline;
+  }
+
+  .tw-pill {
+    padding: 0 14px;
+  }
+}
+
+/* Chip de filtro (toggle) */
+.tw-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tw-space-2);
+  height: var(--tw-control-xs);
+  padding: 0 16px;
+  border: 1px solid var(--tw-border-default);
+  border-radius: var(--tw-radius-pill);
+  background: var(--tw-color-surface);
+  color: var(--tw-color-text-control);
+  font-size: var(--tw-text-xs);
+  font-weight: var(--tw-weight-semibold);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color var(--tw-duration-fast) var(--tw-ease), border-color var(--tw-duration-fast) var(--tw-ease);
+}
+
+.tw-chip:hover {
+  border-color: var(--tw-border-strong);
+  color: var(--tw-color-brand);
+}
+
+.tw-chip[aria-pressed="true"] {
+  border-color: var(--tw-color-accent);
+  background: var(--tw-tint-accent-18);
+  color: var(--tw-color-text-accent);
+}
+
+.tw-chip__count {
+  font-family: var(--tw-font-mono);
+  font-size: var(--tw-text-micro);
+  font-weight: var(--tw-weight-medium);
+}
+
+/* Selector segmentado (radio group), p. ej. cantidad de asistentes */
+.tw-options {
+  display: flex;
+  gap: var(--tw-space-1-5);
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.tw-option {
+  position: relative;
+  flex: 1;
+}
+
+.tw-option input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.tw-option span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  border: 1px solid var(--tw-border-input);
+  border-radius: var(--tw-radius-md);
+  background: var(--tw-color-surface-input);
+  color: var(--tw-color-text-control);
+  font-size: 14px;
+  font-weight: var(--tw-weight-semibold);
+  transition: background-color var(--tw-duration-fast) var(--tw-ease), border-color var(--tw-duration-fast) var(--tw-ease);
+}
+
+.tw-option input:checked + span {
+  border-color: var(--tw-color-accent);
+  background: var(--tw-tint-accent-16);
+  color: var(--tw-color-text-accent);
+}
+
+.tw-option input:focus-visible + span {
+  outline: 2px solid var(--tw-color-brand);
+  outline-offset: 2px;
+}
+
+.tw-option input:disabled + span {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Indicadores de carrusel */
+.tw-dots {
+  display: flex;
+  align-items: center;
+  gap: var(--tw-space-2-5);
+}
+
+.tw-dots__dot {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  padding: 0;
+  border: none;
+  border-radius: var(--tw-radius-pill);
+  background: rgba(255, 255, 255, 0.34);
+  cursor: pointer;
+  transition: width 0.3s var(--tw-ease), background-color 0.3s var(--tw-ease);
+}
+
+/* Área táctil de 32px sin alterar el tamaño visual */
+.tw-dots__dot::before {
+  content: "";
+  position: absolute;
+  inset: -10px -4px;
+}
+
+.tw-dots__dot[aria-current="true"] {
+  width: 38px;
+  background: var(--tw-color-accent);
+}
+
+/* Tarjetas seleccionables (checkbox con detalle): talleres, sesiones */
+.tw-choice-group {
+  display: grid;
+  gap: var(--tw-space-2);
+}
+
+.tw-choice-group__hint {
+  margin: 0 0 var(--tw-space-2-5);
+}
+
+.tw-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--tw-space-3);
+  padding: var(--tw-space-3-5) var(--tw-space-4);
+  border: 1px solid var(--tw-border-input);
+  border-radius: var(--tw-radius-md);
+  background: var(--tw-color-surface-input);
+  cursor: pointer;
+  transition: background-color var(--tw-duration-fast) var(--tw-ease), border-color var(--tw-duration-fast) var(--tw-ease);
+}
+
+.tw-choice:hover {
+  border-color: var(--tw-border-strong);
+}
+
+.tw-choice:has(.tw-choice__input:checked) {
+  border-color: var(--tw-color-accent);
+  background: var(--tw-tint-accent-16);
+}
+
+.tw-choice:has(.tw-choice__input:focus-visible) {
+  outline: 2px solid var(--tw-color-brand);
+  outline-offset: 2px;
+}
+
+.tw-choice:has(.tw-choice__input:disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tw-choice__input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: var(--tw-color-accent);
+  cursor: inherit;
+}
+
+.tw-choice__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--tw-space-1);
+  min-width: 0;
+}
+
+.tw-choice__title {
+  color: var(--tw-color-text-title);
+  font-size: var(--tw-text-sm);
+  font-weight: var(--tw-weight-semibold);
+  line-height: var(--tw-leading-title);
+}
+
+.tw-choice__meta {
+  color: var(--tw-color-text-muted);
+  font-size: var(--tw-text-2xs);
+  line-height: var(--tw-leading-body);
+}
+
+.tw-choice__aside {
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .tw-choice {
+    flex-wrap: wrap;
+  }
+
+  .tw-choice__aside {
+    flex-basis: 100%;
+    padding-left: 30px;
+  }
+}

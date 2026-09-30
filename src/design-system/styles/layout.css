@@ -1,0 +1,150 @@
+/* Primitivas de layout: contenedor, secciones, stacks, clusters y grillas auto-fit */
+.tw-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.tw-page__main {
+  flex: 1;
+}
+
+.tw-page__main:focus {
+  outline: none;
+}
+
+.tw-container {
+  width: 100%;
+  max-width: var(--tw-container);
+  margin-inline: auto;
+  padding-inline: var(--tw-gutter);
+}
+
+.tw-section {
+  padding-top: var(--tw-section-gap);
+}
+
+.tw-section--tight {
+  padding-top: var(--tw-space-9);
+}
+
+.tw-section--wide {
+  padding-top: var(--tw-section-gap-sm);
+}
+
+.tw-section--page {
+  padding-top: var(--tw-space-8);
+}
+
+.tw-section--compact {
+  padding-top: var(--tw-space-6-5);
+}
+
+.tw-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--tw-space-6);
+  flex-wrap: wrap;
+  margin-bottom: var(--tw-space-5);
+}
+
+.tw-section-header > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.tw-section-header__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tw-space-2-5);
+  max-width: 640px;
+}
+
+.tw-section-header__text > .tw-text {
+  margin-top: var(--tw-space-1);
+}
+
+.tw-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tw-gap, var(--tw-space-4));
+}
+
+/* Reparte los hijos a lo alto disponible (lista junto al calendario) */
+.tw-stack--between {
+  justify-content: space-between;
+}
+
+.tw-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--tw-gap, var(--tw-space-2-5));
+}
+
+.tw-cluster--between {
+  justify-content: space-between;
+}
+
+.tw-cluster--center {
+  justify-content: center;
+}
+
+.tw-cluster--nowrap {
+  flex-wrap: nowrap;
+}
+
+/*
+ * Grilla auto-fit del template: repeat(auto-fit, minmax(X, 1fr)).
+ * min(X, 100%) evita overflow horizontal en pantallas más angostas que X.
+ */
+.tw-grid {
+  display: grid;
+  gap: var(--tw-gap, var(--tw-space-4));
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--tw-grid-min, 260px), 100%), 1fr));
+}
+
+.tw-grid--fill {
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--tw-grid-min, 260px), 100%), 1fr));
+}
+
+.tw-grid--min-180 { --tw-grid-min: 180px; }
+.tw-grid--min-200 { --tw-grid-min: 200px; }
+.tw-grid--min-220 { --tw-grid-min: 220px; }
+.tw-grid--min-260 { --tw-grid-min: 260px; }
+.tw-grid--min-300 { --tw-grid-min: 300px; }
+.tw-grid--min-340 { --tw-grid-min: 340px; }
+.tw-grid--min-360 { --tw-grid-min: 360px; }
+.tw-grid--min-420 { --tw-grid-min: 420px; }
+
+.tw-gap-1-5 { --tw-gap: var(--tw-space-1-5); }
+.tw-gap-2 { --tw-gap: var(--tw-space-2); }
+.tw-gap-2-5 { --tw-gap: var(--tw-space-2-5); }
+.tw-gap-3 { --tw-gap: var(--tw-space-3); }
+.tw-gap-3-5 { --tw-gap: var(--tw-space-3-5); }
+.tw-gap-4 { --tw-gap: var(--tw-space-4); }
+.tw-gap-4-5 { --tw-gap: var(--tw-space-4-5); }
+.tw-gap-5-5 { --tw-gap: var(--tw-space-5-5); }
+.tw-gap-6 { --tw-gap: var(--tw-space-6); }
+.tw-gap-8 { --tw-gap: var(--tw-space-8); }
+.tw-gap-10 { --tw-gap: var(--tw-space-9-5); }
+
+/* Contenido + aside sticky (detalle de evento, formularios) */
+.tw-split {
+  display: grid;
+  gap: var(--tw-space-5-5);
+  align-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+}
+
+.tw-split__aside {
+  position: sticky;
+  top: var(--tw-sticky-offset);
+}
+
+@media (max-width: 767px) {
+  .tw-split__aside {
+    position: static;
+  }
+}

@@ -1,0 +1,75 @@
+/* Modal sobre <dialog> nativo: foco atrapado, Escape y fondo inerte sin JS extra */
+.tw-modal {
+  width: min(520px, calc(100% - 2 * var(--tw-gutter)));
+  max-width: none;
+  max-height: calc(100% - 2 * var(--tw-gutter));
+  margin: auto;
+  padding: 0;
+  border: none;
+  background: transparent;
+  overflow: visible;
+}
+
+.tw-modal--wide {
+  width: min(900px, calc(100% - 2 * var(--tw-gutter)));
+}
+
+.tw-modal::backdrop {
+  background: var(--tw-scrim);
+  backdrop-filter: blur(5px);
+}
+
+.tw-modal--media::backdrop {
+  background: var(--tw-scrim-strong);
+  backdrop-filter: blur(6px);
+}
+
+.tw-modal__panel {
+  position: relative;
+  max-height: calc(100vh - 2 * var(--tw-gutter));
+  overflow-y: auto;
+  padding: var(--tw-space-8);
+  border-radius: var(--tw-radius-4xl);
+  background: var(--tw-color-surface);
+  box-shadow: var(--tw-shadow-modal);
+  animation: tw-up 0.3s var(--tw-ease) both;
+}
+
+.tw-modal__panel--flush {
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--tw-radius-3xl);
+}
+
+/* Pie de un modal flush (título + acciones) */
+.tw-modal__footer {
+  padding: 22px 26px;
+}
+
+.tw-modal__close {
+  position: absolute;
+  top: var(--tw-space-4);
+  right: var(--tw-space-4);
+}
+
+.tw-modal__title {
+  margin-bottom: var(--tw-space-2);
+  font-size: 24px;
+  letter-spacing: var(--tw-tracking-h2);
+  padding-right: var(--tw-space-9);
+}
+
+.tw-modal__intro {
+  margin-bottom: var(--tw-space-5-5);
+}
+
+@media (max-width: 480px) {
+  .tw-modal__panel {
+    padding: var(--tw-space-6) var(--tw-space-5);
+    border-radius: var(--tw-radius-2xl);
+  }
+}
+
+body.tw-scroll-locked {
+  overflow: hidden;
+}
