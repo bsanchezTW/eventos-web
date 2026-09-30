@@ -76,6 +76,11 @@ test("Card: layout e interactividad por modificadores", () => {
   assert.equal(out, '<article class="tw-card tw-card--row tw-card--interactive">x</article>');
 });
 
+test("MediaFrame: video con controles nativos y nombre accesible", () => {
+  const out = String(MediaFrame({ src: "https://x/v.mp4", kind: "video", alt: "Resumen" }));
+  assert.match(out, /<video class="tw-media__img tw-media__img--contain" src="https:\/\/x\/v.mp4" controls preload="metadata" playsinline aria-label="Resumen"><\/video>/);
+});
+
 test("MediaFrame muestra placeholder sin imagen", () => {
   assert.match(String(MediaFrame({ src: null, slot: "[ FOTO ]" })), /tw-media__slot[^>]*>\[ FOTO \]/);
   assert.match(String(MediaFrame({ src: "/a.jpg", alt: "Sala" })), /<img class="tw-media__img" src="\/a.jpg" alt="Sala"/);

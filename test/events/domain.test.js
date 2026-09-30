@@ -1,12 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { InvalidEventError, isRegistrationOpen, normalizeEvent, resolveStatus, toEventViews } from "../../src/features/events/domain/event.js";
+import { InvalidEventError, isRegistrationOpen, normalizeEvent, resolveStatus, toEventView, toEventViews } from "../../src/features/events/domain/event.js";
 import {
   dateBadge,
   eventDayKey,
   eventFacts,
   formatLongDate,
   formatPrice,
+  formatRegistrationDeadline,
   formatSchedule,
   metaLine,
   seatAvailability,
@@ -212,4 +213,14 @@ test("mapa: mismos casos que urlMapaEmbebible en nexus-app", () => {
     "https://www.google.com/maps/search/?api=1&query=Hotel%20Intercontinental%2C%20Av.%20Vitacura%202885%2C%20Las%20Condes%2C%20Chile",
   );
   assert.equal(mapsSearchHref({}), null);
+});
+
+test("cierre de inscripciones en la ficha (hora del evento)", () => {
+  const event = toEventView(normalizeEvent({ ...base, location: { online: false, city: "Santiago" }, registrationClosesAt: "2026-10-09T23:59:00-03:00" }), { now: new Date("2026-09-30T12:00:00-03:00") });
+  assert.equal(formatRegistrationDeadline(event), "Viernes 9 de octubre, 23:59");
+  assert.deepEqual(eventFacts(event).at(-1), { label: "Inscripciones hasta", value: "Viernes 9 de octubre, 23:59" });
+  assert.equal(eventFacts({ ...event, registrationOpen: false }).at(-1)?.label, "Inscripciones cerraron");
+  assert.equal(eventFacts({ ...event, status: "finished" }).some((f) => f.label.startsWith("Inscripciones")), false);
+  assert.equal(formatRegistrationDeadline({ timezone: "America/Santiago" }), null);
+  assert.equal(normalizeEvent({ ...base, registrationClosesAt: "mañana" }).registrationClosesAt, undefined);
 });

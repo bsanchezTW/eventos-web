@@ -223,6 +223,7 @@ export const EVENTS = [
   {
     id: "transworld-connect-2026",
     mapUrl: CASA_PIEDRA_MAP,
+    registrationClosesAt: "2026-11-24T23:59:00-03:00",
     title: "Transworld Connect 2026: dos días de tecnología en terreno",
     heroTitle: "Transworld Connect 2026",
     summary: "Nuestro encuentro anual: demos en vivo, casos de clientes y talleres prácticos de todas las líneas de producto.",

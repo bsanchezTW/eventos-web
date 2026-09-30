@@ -1,12 +1,12 @@
 /**
- * Galería: lightbox con navegación anterior / siguiente (flechas del teclado incluidas).
+ * Álbum de la galería: lightbox con navegación anterior / siguiente (flechas del teclado incluidas).
  */
 import { openModal } from "../../../design-system/behaviors/index.js";
 import { toHtml } from "../../../design-system/index.js";
-import { LightboxContent } from "../components/sections.js";
+import { LightboxContent } from "../components/gallery.js";
 import { initShell } from "./shell.js";
 
-/** @typedef {import("../data/gallery.mock.js").MediaItem} MediaItem */
+/** @typedef {import("../domain/gallery.js").MediaItem} MediaItem */
 
 function initLightbox() {
   const dataNode = document.getElementById("gallery-data");
@@ -14,13 +14,13 @@ function initLightbox() {
   const content = dialog?.querySelector("[data-lightbox-content]");
   if (!dataNode || !dialog || !content) return;
 
-  /** @type {MediaItem[]} */
-  const items = JSON.parse(dataNode.textContent ?? "[]");
+  /** @type {{ title: string, items: MediaItem[] }} */
+  const { title, items } = JSON.parse(dataNode.textContent ?? '{"title":"","items":[]}');
   let index = 0;
 
   const show = (/** @type {number} */ next) => {
     index = (next + items.length) % items.length;
-    content.innerHTML = toHtml(LightboxContent({ item: items[index] }));
+    content.innerHTML = toHtml(LightboxContent({ item: items[index], index, total: items.length, title }));
   };
 
   document.addEventListener("click", (event) => {
@@ -39,6 +39,9 @@ function initLightbox() {
     const control = target.closest("[data-lightbox-prev]") ? "[data-lightbox-prev]" : "[data-lightbox-next]";
     /** @type {HTMLElement | null} */ (dialog.querySelector(control))?.focus();
   });
+
+  // Un video no sigue sonando con el lightbox cerrado.
+  dialog.addEventListener("close", () => dialog.querySelectorAll("video").forEach((video) => video.pause()));
 
   dialog.addEventListener("keydown", (event) => {
     if (event.key === "ArrowLeft") show(index - 1);

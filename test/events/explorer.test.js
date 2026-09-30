@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { CATEGORIES } from "../../src/features/events/data/categories.mock.js";
 import { EVENTS } from "../../src/features/events/data/events.mock.js";
+import { ExplorerResults } from "../../src/features/events/components/explorer.js";
 import { normalizeEvent, toEventViews } from "../../src/features/events/domain/event.js";
 import {
   DEFAULT_QUERY,
@@ -28,10 +29,10 @@ test("serializeExplorerQuery es inversa de parse y omite defaults", () => {
   assert.deepEqual(parseExplorerQuery(new URLSearchParams(serializeExplorerQuery(query))), query);
 });
 
-test("applyFilters excluye talleres y finalizados; busca sin tildes", () => {
+test("applyFilters excluye talleres, incluye realizados; busca sin tildes", () => {
   const ids = applyFilters(views, DEFAULT_QUERY).map((e) => e.id);
   assert.ok(!ids.includes("connect-taller-fttx"), "los talleres se ven dentro del evento principal");
-  assert.ok(!ids.includes("webinar-mantencion-ups"), "los finalizados no se listan");
+  assert.ok(ids.includes("webinar-mantencion-ups"), "los realizados también se listan");
   assert.ok(ids.includes("showroom-semana-conectividad"), "los en curso sí");
 
   const search = applyFilters(views, q({ q: "analitica videovigilancia" })).map((e) => e.id);
@@ -40,10 +41,14 @@ test("applyFilters excluye talleres y finalizados; busca sin tildes", () => {
   assert.deepEqual(applyFilters(views, q({ sede: "lima" })).map((e) => e.id).sort(), ["encuentro-integradores-lima", "jornada-respaldo-energetico-lima"]);
 });
 
-test("sortEvents: cancelados al final; precio y cupos", () => {
+test("sortEvents: próximos, luego realizados (recientes primero), cancelados al final; precio y cupos", () => {
   const list = sortEvents(applyFilters(views, DEFAULT_QUERY), "fecha");
   assert.equal(list.at(-1)?.status, "cancelled");
-  const byPrice = sortEvents(applyFilters(views, DEFAULT_QUERY), "precio").filter((e) => e.status !== "cancelled");
+  const ranks = list.map((e) => (e.status === "cancelled" ? 2 : e.status === "finished" ? 1 : 0));
+  assert.ok(ranks.every((r, i) => i === 0 || ranks[i - 1] <= r), "próximos → realizados → cancelados");
+  const past = list.filter((e) => e.status === "finished");
+  assert.ok(past.length > 1 && past.every((e, i) => i === 0 || Date.parse(past[i - 1].startsAt) >= Date.parse(e.startsAt)), "realizados del más reciente al más antiguo");
+  const byPrice = sortEvents(applyFilters(views, DEFAULT_QUERY), "precio").filter((e) => e.status !== "cancelled" && e.status !== "finished");
   assert.ok(byPrice.every((e, i, arr) => i === 0 || arr[i - 1].price <= e.price));
   assert.equal(sortEvents(applyFilters(views, DEFAULT_QUERY), "cupos")[0].id, "curso-fusion-empalme-fibra");
 });
@@ -52,7 +57,7 @@ test("buildExplorer: mes automático = mes del próximo evento por comenzar", ()
   const result = buildExplorer(views, DEFAULT_QUERY, { now: NOW });
   assert.equal(result.query.month, "2026-10");
   assert.equal(result.monthExplicit, false);
-  assert.deepEqual(result.months.map((m) => m.key), ["2026-09", "2026-10", "2026-11", "2026-12"]);
+  assert.deepEqual(result.months.map((m) => m.key), ["2026-08", "2026-09", "2026-10", "2026-11", "2026-12"], "incluye meses con eventos realizados");
   assert.deepEqual(result.calendar?.markers, { 8: 1, 15: 1, 20: 1, 22: 1, 29: 1 });
   assert.equal(result.calendar?.today, null);
 });
@@ -72,12 +77,26 @@ test("buildExplorer: mes explícito, día y 'hoy'", () => {
 test("buildExplorer: sin resultados en el mes ofrece alternativas", () => {
   const result = buildExplorer(views, q({ categoria: "energia", mes: "2026-10" }), { now: NOW });
   assert.equal(result.monthItems.length, 0);
-  assert.deepEqual(result.alternatives.map((m) => [m.key, m.count]), [["2026-11", 1], ["2026-12", 1]]);
-  assert.equal(result.total, 2);
+  assert.deepEqual(result.alternatives.map((m) => [m.key, m.count]), [["2026-08", 1], ["2026-11", 1], ["2026-12", 1]]);
+  assert.equal(result.total, 3);
 });
 
 test("buildExplorer: facetas estables de sedes y formatos", () => {
   const result = buildExplorer(views, q({ categoria: "cctv" }), { now: NOW });
   assert.deepEqual(result.facets.cities.map((c) => c.value), ["antofagasta", "concepcion", "lima", "santiago", "online"]);
   assert.ok(result.facets.modalities.some((m) => m.value === "webinar"));
+});
+
+test("buildExplorer: sin próximos, abre el mes más reciente con eventos", () => {
+  const past = views.filter((e) => e.status === "finished");
+  const result = buildExplorer(past, DEFAULT_QUERY, { now: NOW });
+  assert.equal(result.query.month, "2026-09");
+});
+
+test("ExplorerResults: si el mes tiene una sola fecha, completa con lo realizado", () => {
+  const result = buildExplorer(views, q({ categoria: "energia", mes: "2026-11" }), { now: NOW });
+  const html = String(ExplorerResults({ explorer: result }));
+  assert.equal(result.monthItems.length, 1);
+  assert.match(html, /Realizados recientemente/);
+  assert.equal((html.match(/tw-card--row/g) ?? []).length, 2);
 });

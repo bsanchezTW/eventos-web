@@ -28,6 +28,15 @@ export function loadConfig(env = process.env) {
       url: supabaseUrl,
       key: env.SUPABASE_PUBLISHABLE_KEY?.trim() || undefined,
     },
+    /**
+     * Galería: proyecto Supabase de la INTRANET (compartido por Chile y Perú), solo lectura con su
+     * clave publicable. Sin estas variables la galería usa álbumes de ejemplo.
+     */
+    gallery: {
+      url: env.INTRANET_SUPABASE_URL?.trim().replace(/\/+$/, "") || undefined,
+      key: env.INTRANET_SUPABASE_PUBLISHABLE_KEY?.trim() || undefined,
+      cacheTtlMs: (Number(env.GALLERY_CACHE_TTL_S) || 600) * 1000,
+    },
     /** Límite de inscripciones por IP (la API pública pide limitar antes de registrar). */
     registrationLimit: {
       max: Number(env.REGISTRATION_RATE_LIMIT) || 10,

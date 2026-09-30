@@ -17,6 +17,7 @@ import { eventHref } from "../domain/links.js";
  */
 export function EventBadges(event, { showFeatured = true, size = "md", onDark = false } = {}) {
   return html`${event.status === "live" ? Badge({ label: "En curso", variant: onDark ? "accent" : "accent-soft", live: true, size }) : ""}
+    ${event.status === "finished" ? Badge({ label: "Realizado", variant: onDark ? "light" : "outline", size }) : ""}
     ${event.status === "cancelled" ? Badge({ label: "Cancelado", variant: onDark ? "light" : "danger", size }) : ""}
     ${Badge({ label: MODALITIES[event.modality], variant: onDark ? "accent" : "accent-soft", size })}
     ${Badge({ label: event.categoryName, variant: onDark ? "on-dark" : "neutral", size })}

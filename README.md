@@ -22,7 +22,8 @@ La landing queda en `http://localhost:3020`. La guía viva del sistema de diseñ
 | Ruta | Uso |
 |------|-----|
 | `GET /` | Agenda (hero, calendario, formas de participar, galería). Filtros compartibles por URL: `categoria` (lista con comas), `mes` (`2026-10`), `dia` (`2026-10-15`), `todos=1` |
-| `GET /galeria` | Galería por país con lightbox (`?tipo=foto` o `?tipo=video`) |
+| `GET /galeria` | Álbumes de la galería de la intranet, por país |
+| `GET /galeria/:slug` | Fotos y videos de un álbum, con lightbox |
 | `GET /webinars` | Webinars en vivo y grabados |
 | `GET /eventos/:id` | Detalle con inscripción |
 | `GET /api/eventos` | Explorador (misma query que la landing) |
@@ -94,6 +95,19 @@ del formulario; la clave nunca llega al navegador.
   digan webinar/online), la categoría es la `tematica` y la ciudad sale de la dirección.
 - Pendiente para producción (lo pide `api-publica.md`): Cloudflare Turnstile en el formulario.
   El límite por IP ya está (`REGISTRATION_RATE_LIMIT`).
+
+## Galería (intranet)
+
+Los álbumes vienen de la galería de la intranet (proyecto Supabase INTRANET, compartido por Chile
+y Perú). Solo se publican los que alguien marca **"Mostrar en la web de eventos"** en la intranet;
+"público" en la intranet significa "lo ven ambos países", no "en internet". Un álbum privado
+nunca se publica (la base lo impide).
+
+- Lectura con la clave publicable: `rpc galeria_web()` y URLs firmadas del storage (los buckets
+  son privados; la política `galeria_web_lectura` solo firma archivos de álbumes publicados).
+- Miniaturas con transformación de imagen de Supabase; si el proyecto no la tiene, se usa el original.
+- El SQL está en `intranet-web/supabase/shared/schema.sql` (sección "Web pública de eventos").
+- Sin `INTRANET_SUPABASE_*` la galería muestra álbumes de ejemplo.
 
 ## Variables de entorno
 

@@ -33,7 +33,7 @@ const DETAIL = {
   ...CALENDAR_ROW,
   descripcion: "Un día completo de demos y talleres.\n\nSegundo párrafo.",
   mapa_url: "https://www.google.com/maps/embed?pb=!1m18!2sIntercontinental",
-  inscripciones_cierre: null,
+  inscripciones_cierre: "2026-11-11T23:59:00",
   cupo: { limitado: true, disponibles: 42 },
   formulario: { campos: ["nombre_completo", "email", "empresa", "cargo", "telefono"] },
   subeventos: [
@@ -102,6 +102,9 @@ test("toRawEvents: evento principal con talleres y cupos disponibles", () => {
   assert.equal(fibra.seatsLeft, null, "cupo ilimitado");
   assert.equal(event.mapUrl, "https://www.google.com/maps/embed?pb=!1m18!2sIntercontinental");
   assert.equal(ia.mapUrl, event.mapUrl, "el taller usa el mapa del evento");
+  assert.equal(event.registrationClosesAt, "2026-11-11T23:59:00-03:00", "hora local del evento con su offset");
+  assert.equal(ia.registrationClosesAt, event.registrationClosesAt, "el taller cierra con su evento");
+  assert.equal(toRawEvents(CALENDAR_ROW)[0].registrationClosesAt, undefined, "el calendario no trae cierre");
 });
 
 test("toRawEvents: sin hora ni imagen → día completo con foto por defecto", () => {

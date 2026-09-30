@@ -61,10 +61,42 @@ function MonthEmpty({ explorer }) {
   });
 }
 
+/**
+ * Columna junto al calendario: las fechas del mes y, si sobra espacio, lo realizado más reciente
+ * (fuera de ese mes) para que la agenda no quede vacía entre temporadas.
+ * @param {{ explorer: ExplorerResult }} props
+ */
+function MonthColumn({ explorer }) {
+  const { monthItems, seasonItems, query } = explorer;
+  if (!monthItems.length) return MonthEmpty({ explorer });
+  const visible = monthItems.slice(0, MONTH_LIST_LIMIT);
+  const room = query.day ? 0 : MONTH_LIST_LIMIT - visible.length;
+  const recent = room > 0 ? seasonItems.filter((e) => e.status === "finished" && !monthItems.includes(e)).slice(0, room) : [];
+  return Stack({
+    gap: "3-5",
+    children: html`${visible.map((event) => EventCard({ event }))}
+      ${recent.length
+        ? html`${Eyebrow({ children: "Realizados recientemente", as: "p", tone: "muted", className: "tw-mt-2" })}
+          ${recent.map((event) => EventCard({ event, showFeatured: false }))}`
+        : ""}`,
+  });
+}
+
+/** Temporada completa: próximas fechas y, aparte, lo ya realizado. @param {{ items: ExplorerResult["seasonItems"] }} props */
+function SeasonList({ items }) {
+  const upcoming = items.filter((e) => e.status !== "finished");
+  const past = items.filter((e) => e.status === "finished");
+  const group = (/** @type {string} */ label, /** @type {typeof items} */ events, /** @type {string} */ className = "") =>
+    events.length
+      ? html`${Eyebrow({ children: `${label} (${events.length})`, as: "p", className: `tw-mb-3-5 ${className}`.trim() })}
+        ${Grid({ min: 420, gap: "3-5", as: "ul", children: events.map((event) => EventCard({ event, as: "li" })) })}`
+      : "";
+  return html`${group("Próximas fechas", upcoming)}${group("Realizados", past, upcoming.length ? "tw-mt-6" : "")}`;
+}
+
 /** Región dinámica: calendario + fechas del mes + temporada completa. @param {{ explorer: ExplorerResult }} props */
 export function ExplorerResults({ explorer }) {
   const { calendar, monthItems, seasonItems, query, total } = explorer;
-  const visible = monthItems.slice(0, MONTH_LIST_LIMIT);
   const summary = `${total} ${total === 1 ? "evento encontrado" : "eventos encontrados"}${calendar ? `; ${monthItems.length} en ${calendar.title}` : ""}.`;
 
   return html`<p class="tw-sr-only" role="status">${summary}</p>
@@ -72,7 +104,7 @@ export function ExplorerResults({ explorer }) {
       min: 360,
       gap: "5-5",
       children: html`${calendar ? CalendarPanel({ calendar, selectedDay: query.day }) : ""}
-        ${Stack({ gap: "3-5", between: true, children: visible.length ? visible.map((event) => EventCard({ event })) : MonthEmpty({ explorer }) })}`,
+        ${MonthColumn({ explorer })}`,
     })}
     ${Button({
       label: query.all ? "Ver menos" : `Ver todos los eventos (${total})`,
@@ -83,10 +115,7 @@ export function ExplorerResults({ explorer }) {
       attrs: { "data-action": "toggle-season", "aria-expanded": String(query.all), "aria-controls": SEASON_LIST_ID },
     })}
     <div id="${SEASON_LIST_ID}" class="tw-mt-4-5 tw-animate-up" ${query.all ? "" : "hidden"}>
-      ${query.all
-        ? html`${Eyebrow({ children: "Toda la temporada", as: "p", className: "tw-mb-3-5" })}
-          ${Grid({ min: 420, gap: "3-5", as: "ul", children: seasonItems.map((event) => EventCard({ event, as: "li" })) })}`
-        : ""}
+      ${query.all ? SeasonList({ items: seasonItems }) : ""}
     </div>`;
 }
 

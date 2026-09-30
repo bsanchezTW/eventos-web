@@ -40,14 +40,11 @@ test("getLandingData: evento del hero y stats del template", async () => {
   assert.deepEqual(data.stats.map((s) => s.value), ["Jue 8 de octubre", "Presencial · Webinar · En terreno", "Santiago · Antofagasta · Lima"]);
 });
 
-test("getWebinars y getGallery", async () => {
+test("getWebinars", async () => {
   const { eventService } = setup();
   const { upcoming, recorded } = await eventService.getWebinars();
   assert.deepEqual(upcoming.map((e) => e.id), ["webinar-fttx-industrial", "webinar-wifi7-oficinas", "webinar-cctv-analitica", "webinar-tendencias-2027"]);
   assert.deepEqual(recorded.map((e) => e.id), ["webinar-vallados-sensores", "webinar-mantencion-ups"]);
-  const gallery = await eventService.getGallery("foto");
-  assert.ok(gallery.items.every((m) => m.type === "foto"));
-  assert.deepEqual(gallery.groups.map((g) => [g.country, g.items.length]), [["Chile", 4], ["Perú", 1]]);
 });
 
 test("getEventDetail: principal con talleres y taller con padre", async () => {

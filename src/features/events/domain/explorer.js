@@ -90,9 +90,13 @@ export function hasActiveFilters(query) {
   return Boolean(query.q || query.categories.length || query.modality || query.city || query.day);
 }
 
-/** Aparece en el explorador: evento de primer nivel que aún no terminó. @param {EventView} event */
+/**
+ * Aparece en el explorador: evento de primer nivel (los talleres se ven dentro de su evento).
+ * Los finalizados también: la agenda muestra lo realizado para dar contexto.
+ * @param {EventView} event
+ */
 export function isListable(event) {
-  return !event.parentId && event.status !== "finished";
+  return !event.parentId;
 }
 
 /** @param {EventView} event @param {string} q */
@@ -119,7 +123,8 @@ export function applyFilters(events, query) {
 }
 
 /**
- * Orden estable. Los cancelados siempre al final.
+ * Orden estable: próximos y en curso según `sort`; después los realizados, del más reciente al
+ * más antiguo; los cancelados siempre al final.
  * @param {EventView[]} events
  * @param {SortKey} sort
  */
@@ -132,7 +137,8 @@ export function sortEvents(events, sort) {
     precio: (a, b) => a.price - b.price || byDate(a, b),
     cupos: (a, b) => seats(a) - seats(b) || byDate(a, b),
   };
-  return [...events].sort((a, b) => Number(a.status === "cancelled") - Number(b.status === "cancelled") || comparators[sort](a, b));
+  const rank = (/** @type {EventView} */ e) => (e.status === "cancelled" ? 2 : e.status === "finished" ? 1 : 0);
+  return [...events].sort((a, b) => rank(a) - rank(b) || (rank(a) === 1 ? byDate(b, a) : comparators[sort](a, b)));
 }
 
 /**
@@ -165,12 +171,13 @@ export function buildExplorer(events, query, { now = new Date(), timeZone = "Ame
   const months = monthKeys.map((key) => ({ key, label: monthName(Number(key.slice(5))), count: countByMonth.get(key) ?? 0 }));
 
   // Mes automático: el del próximo evento por comenzar (un evento "en curso" que empezó
-  // el mes anterior no debería abrir la agenda en un mes que está terminando).
+  // el mes anterior no debería abrir la agenda en un mes que está terminando). Sin próximos,
+  // el mes más reciente con resultados.
   const monthExplicit = Boolean(query.month && monthKeys.includes(query.month));
   const nextUpcoming = filtered.filter((e) => e.status === "upcoming").sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))[0];
   const month = monthExplicit
     ? /** @type {string} */ (query.month)
-    : ((nextUpcoming && eventMonthKey(nextUpcoming)) ?? months.find((m) => m.count > 0)?.key ?? monthKeys[0] ?? null);
+    : ((nextUpcoming && eventMonthKey(nextUpcoming)) ?? months.findLast((m) => m.count > 0)?.key ?? monthKeys.at(-1) ?? null);
   const inMonth = filtered.filter((event) => eventMonthKey(event) === month);
   const day = query.day && month && query.day.startsWith(month) && inMonth.some((e) => eventDayKey(e) === query.day) ? query.day : null;
 

@@ -14,7 +14,6 @@
  * - La ciudad se toma del último tramo de la dirección ("Av. Vitacura 2885, Las Condes").
  * - El mapa (`mapa_url`) lo carga el staff en la app; los talleres usan el del evento.
  */
-import { GALLERY } from "../data/gallery.mock.js";
 import { normalizeEvent } from "../domain/event.js";
 import { foldText, zonedParts } from "../domain/format.js";
 
@@ -49,6 +48,17 @@ export function zonedIso(date, time, timeZone) {
   const offset = offsetAt(wall - offsetAt(wall) * 60000);
   const abs = Math.abs(offset);
   return `${date}T${pad(hh)}:${pad(mm)}:00${offset < 0 ? "-" : "+"}${pad(Math.floor(abs / 60))}:${pad(abs % 60)}`;
+}
+
+/**
+ * Cierre de inscripciones: la base lo guarda en hora local del evento ("2026-10-09T23:59:00",
+ * solo en el detalle) → ISO con offset.
+ * @param {unknown} value
+ * @param {string} timeZone
+ */
+function closesAt(value, timeZone) {
+  const [date, time] = typeof value === "string" ? value.split("T") : [];
+  return date && time ? zonedIso(date, time, timeZone) : undefined;
 }
 
 /** Temática → categoría ("Seguridad de máquinas" → { id: "seguridad-de-maquinas" }). @param {unknown} topic @returns {Category} */
@@ -118,6 +128,7 @@ export function toRawEvents(row, { featured = false } = {}) {
     hasTime: Boolean(row.hora_inicio),
     // Solo viene en el detalle (rpe_publico_evento); normalizeEvent descarta enlaces no insertables.
     mapUrl: row.mapa_url ?? undefined,
+    registrationClosesAt: closesAt(row.inscripciones_cierre, timezone),
   };
 
   const workshops = subevents.map((/** @type {any} */ s) => {
@@ -147,6 +158,7 @@ export function toRawEvents(row, { featured = false } = {}) {
       seatsLeft: left,
       registrationOpen: event.registrationOpen,
       mapUrl: event.mapUrl,
+      registrationClosesAt: event.registrationClosesAt,
       program: speaker ? [{ time: clean(s.hora_inicio).slice(0, 5), title: clean(s.nombre), speaker }] : [],
     };
   });
@@ -161,12 +173,11 @@ export function toRawEvents(row, { featured = false } = {}) {
  *   pastDays?: number,
  *   futureDays?: number,
  *   clock?: () => number,
- *   media?: import("../data/gallery.mock.js").MediaItem[],
  *   logger?: Pick<Console, "warn">,
  * }} options
  * @returns {EventRepository}
  */
-export function createSupabaseEventRepository({ rpc, cacheTtlMs = 30_000, pastDays = 180, futureDays = 365, clock = Date.now, media = GALLERY, logger = console }) {
+export function createSupabaseEventRepository({ rpc, cacheTtlMs = 30_000, pastDays = 180, futureDays = 365, clock = Date.now, logger = console }) {
   /** @type {{ at: number, data: Promise<{ events: Event[], categories: Category[] }> } | null} */
   let cache = null;
 
@@ -233,9 +244,6 @@ export function createSupabaseEventRepository({ rpc, cacheTtlMs = 30_000, pastDa
     },
     async listCategories() {
       return (await data()).categories.map((c) => ({ ...c }));
-    },
-    async listMedia() {
-      return media.map((m) => ({ ...m }));
     },
     invalidate() {
       cache = null;

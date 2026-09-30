@@ -57,6 +57,7 @@ import { embeddableMapUrl } from "./maps.js";
  * @property {boolean} registrationOpen  false si la organización cerró las inscripciones antes del evento
  * @property {boolean} hasTime      false si aún no hay horario confirmado (evento de día completo)
  * @property {string} [mapUrl]      Google Maps para insertar (ver domain/maps.js); se descarta si no es apto
+ * @property {string} [registrationClosesAt]  ISO 8601 con offset: después de esto no se inscribe (antes del fin)
  */
 
 /**
@@ -156,6 +157,7 @@ export function normalizeEvent(raw) {
     registrationOpen: raw.registrationOpen !== false,
     hasTime: raw.hasTime !== false,
     mapUrl: embeddableMapUrl(raw.mapUrl) ?? undefined,
+    registrationClosesAt: isIso(raw.registrationClosesAt) ? raw.registrationClosesAt : undefined,
   };
 }
 

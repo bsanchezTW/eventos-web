@@ -294,6 +294,12 @@
   object-fit: cover;
 }
 
+/* Video: se ve completo (sin recorte) sobre el fondo del marco */
+.tw-media__img--contain {
+  object-fit: contain;
+  background: var(--tw-color-surface-darker);
+}
+
 .tw-media__slot {
   font-family: var(--tw-font-mono);
   font-size: var(--tw-text-micro);

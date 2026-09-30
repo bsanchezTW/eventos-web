@@ -2,9 +2,10 @@
  * Agenda (landing) — mismo orden que el template: hero, stats, calendario, formas de
  * participar y teaser de galería (la banda CTA y el footer los agrega el shell).
  */
-import { BRAND, Button, HeroCarousel, Section, SectionHeader, VisuallyHidden, html } from "../../../design-system/index.js";
+import { BRAND, Button, HeroCarousel, Section, SectionHeader, html } from "../../../design-system/index.js";
 import { ExplorerSection } from "../components/explorer.js";
-import { GalleryTeaser, StatBar, WaysGrid } from "../components/sections.js";
+import { GalleryTeaser } from "../components/gallery.js";
+import { StatBar } from "../components/sections.js";
 import { LANDING_CONTENT } from "../data/landing-content.js";
 import { formatCity, formatKickerDate, monthName } from "../domain/format.js";
 import { eventHref } from "../domain/links.js";
@@ -62,34 +63,29 @@ function buildSlides(landing) {
 }
 
 /**
- * @param {{ landing: LandingData, explorer: ExplorerResult, categories: Array<{ id: string, name: string }>, canonical?: string }} props
+ * @param {{ landing: LandingData, explorer: ExplorerResult, teaser: import("../domain/gallery.js").Album[], categories: Array<{ id: string, name: string }>, canonical?: string }} props
  */
-export function renderLandingPage({ landing, explorer, categories, canonical }) {
+export function renderLandingPage({ landing, explorer, teaser, categories, canonical }) {
   const content = LANDING_CONTENT;
 
   const main = html`
     ${HeroCarousel({ label: "Destacados de la agenda", title: content.heroTitle, slides: buildSlides(landing) })}
     ${StatBar({ stats: landing.stats })}
     ${ExplorerSection({ explorer, categories, eyebrow: content.calendar.eyebrow, title: content.calendar.title })}
-    ${Section({
-      id: "participar",
-      labelledBy: "participar-title",
-      spacing: "wide",
-      children: html`${VisuallyHidden({ as: "h2", id: "participar-title", children: "Otras formas de participar" })}
-        ${WaysGrid({ ways: content.ways })}`,
-    })}
-    ${Section({
-      id: "galeria",
-      labelledBy: "galeria-title",
-      spacing: "wide",
-      children: html`${SectionHeader({
-        eyebrow: content.galleryTeaser.eyebrow,
-        title: content.galleryTeaser.title,
-        id: "galeria-title",
-        actions: Button({ label: content.galleryTeaser.action, variant: "outline", href: "/galeria" }),
-      })}
-        ${GalleryTeaser({ items: content.galleryTeaser.items })}`,
-    })}`;
+    ${teaser.length
+      ? Section({
+          id: "galeria",
+          labelledBy: "galeria-title",
+          spacing: "wide",
+          children: html`${SectionHeader({
+            eyebrow: content.galleryTeaser.eyebrow,
+            title: content.galleryTeaser.title,
+            id: "galeria-title",
+            actions: Button({ label: content.galleryTeaser.action, variant: "outline", href: "/galeria" }),
+          })}
+            ${GalleryTeaser({ albums: teaser })}`,
+        })
+      : ""}`;
 
   return renderPage({
     title: content.meta.title,

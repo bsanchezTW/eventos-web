@@ -41,43 +41,16 @@ export const LANDING_CONTENT = {
     eyebrow: "Calendario",
     title: "Próximas fechas",
   },
-  ways: [
-    {
-      title: "Capacitación a medida",
-      body: "Armamos una sesión con nuestros especialistas según los proyectos que estés ejecutando.",
-      cta: "Solicitar",
-      href: mailto("Capacitación a medida"),
-    },
-    {
-      title: "Visita al showroom",
-      body: "Ven a ver equipos en funcionamiento en la sala de capacitación de Huechuraba.",
-      cta: "Agendar visita",
-      href: mailto("Visita al showroom"),
-    },
-    {
-      title: "Ser marca invitada",
-      body: "¿Representas una marca? Postula para presentar en la próxima jornada técnica.",
-      cta: "Postular",
-      href: mailto("Postulación marca invitada"),
-    },
-  ],
   galleryTeaser: {
     eyebrow: "Galería",
     title: "Cómo se viven nuestras jornadas",
     action: "Ver fotos y videos",
-    // Sin imagen: placeholder rayado del sistema hasta cargar fotos reales.
-    items: [
-      { title: "Jornada Radwin · Santiago", image: null, slot: "[ FOTO 4:5 ]" },
-      { title: "Demo en faena · Antofagasta", image: null, slot: "[ FOTO 4:5 ]" },
-      { title: "Taller de certificación", image: null, slot: "[ FOTO 4:5 ]" },
-      { title: "Encuentro integradores · Lima", image: null, slot: "[ FOTO 4:5 ]" },
-    ],
   },
   galleryPage: {
     title: "Galería · Transworld",
     eyebrow: "Galería",
     heading: "Lo que pasó en cada evento",
-    text: "Fotos y grabaciones de nuestras sesiones en Santiago, Antofagasta y Lima.",
+    text: "Fotos y videos de nuestros eventos en Chile y Perú.",
   },
   webinarsPage: {
     title: "Webinars · Transworld",

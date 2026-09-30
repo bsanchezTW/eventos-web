@@ -29,8 +29,8 @@ test("GET / renderiza la landing completa con cabeceras de seguridad", async () 
   assert.match(res.headers.get("content-security-policy") ?? "", /style-src 'self'/);
   assert.equal(res.headers.get("x-content-type-options"), "nosniff");
   const body = await res.text();
-  // Mismo orden que el template: hero → stats → calendario → participar → galería → CTA
-  const order = ["tw-hero", "tw-stat-bar", "id=\"calendario\"", "id=\"participar\"", "id=\"galeria\"", "tw-cta-band--accent", "tw-footer"].map((m) => body.indexOf(m));
+  // Orden: hero → stats → calendario → galería → CTA (sin "formas de participar")
+  const order = ["tw-hero", "tw-stat-bar", "id=\"calendario\"", "id=\"galeria\"", "tw-cta-band--accent", "tw-footer"].map((m) => body.indexOf(m));
   assert.ok(order.every((pos, i) => pos > 0 && (i === 0 || pos > order[i - 1])), `orden de secciones: ${order}`);
   assert.match(body, /id="suscribirme"/);
   assert.doesNotMatch(body, /tw-searchbar|data-explorer-form/, "el template no tiene buscador ni barra de filtros");
@@ -50,12 +50,21 @@ test("GET / respeta filtros de la URL (SSR = mismo estado que el cliente)", asyn
   assert.match(body, /data-category="energia"[^>]*aria-pressed="true"|aria-pressed="true"[^>]*data-category="energia"/);
 });
 
-test("GET /galeria y /webinars (vistas del template)", async () => {
-  const gallery = await (await fetch(`${base}/galeria?tipo=video`)).text();
+test("GET /galeria, /galeria/:slug y /webinars", async () => {
+  const gallery = await (await fetch(`${base}/galeria`)).text();
   assert.match(gallery, /Lo que pasó en cada evento/);
-  assert.match(gallery, /href="\/galeria\?tipo=video" aria-current="page"/);
-  assert.equal((gallery.match(/data-lightbox=/g) ?? []).length, 3, "solo videos");
-  assert.match(gallery, /<script type="application\/json" id="gallery-data">/);
+  assert.equal((gallery.match(/href="\/galeria\/[a-z0-9-]+"/g) ?? []).length, 3, "un enlace por álbum");
+  assert.match(gallery, /id="galeria-Chile"[\s\S]*id="galeria-Perú"/, "Chile antes que Perú");
+
+  const album = await (await fetch(`${base}/galeria/jornada-radwin-santiago`)).text();
+  assert.match(album, /<h1[^>]*>Jornada Radwin: conectividad inalámbrica para minería<\/h1>/);
+  assert.match(album, /Chile · 6 fotos · 1 video/);
+  assert.equal((album.match(/data-lightbox=/g) ?? []).length, 7);
+  assert.match(album, /<script type="application\/json" id="gallery-data">/);
+  assert.equal((await fetch(`${base}/galeria/no-existe`)).status, 404);
+
+  const landing = await (await fetch(`${base}/`)).text();
+  assert.match(landing, /href="\/galeria\/jornada-radwin-santiago" aria-label="Jornada Radwin[^"]*: ver álbum"/, "teaser con los álbumes");
 
   const webinars = await (await fetch(`${base}/webinars`)).text();
   assert.match(webinars, /Sesiones técnicas desde donde estés/);
@@ -74,6 +83,7 @@ test("GET /eventos/:id y 404 con el lenguaje visual del sistema", async () => {
   assert.match(detail, /<option value="CL" selected>\+56 CL<\/option>/);
   assert.equal((detail.match(/<input class="tw-choice__input" type="checkbox" name="talleres"/g) ?? []).length, 4);
   // Cómo llegar: mapa cargado en la app + enlace a Google Maps.
+  assert.match(detail, /Inscripciones hasta<\/dt>\s*<dd[^>]*>Martes 24 de noviembre, 23:59</);
   assert.match(detail, />Cómo llegar</);
   assert.match(detail, /<iframe class="tw-map__frame" src="https:\/\/maps\.google\.com\/maps\?q=[^"]+&amp;output=embed" title="Mapa: Centro de Eventos Casa Piedra"/);
   assert.match(detail, /href="https:\/\/www\.google\.com\/maps\/search\/\?api=1&amp;query=[^"]+" target="_blank" rel="noopener"/);

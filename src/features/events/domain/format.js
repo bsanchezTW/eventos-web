@@ -141,6 +141,16 @@ export function formatTimeRange(event) {
   return `${s.time} – ${e.time}`;
 }
 
+/**
+ * "Jueves 9 de octubre, 23:59" (cierre de inscripciones en la hora del evento), o null si no hay cierre.
+ * @param {Pick<Event, "registrationClosesAt" | "timezone">} event
+ */
+export function formatRegistrationDeadline(event) {
+  if (!event.registrationClosesAt) return null;
+  const c = zonedParts(event.registrationClosesAt, event.timezone);
+  return `${capitalize(WEEKDAYS[c.weekday])} ${c.day} de ${MONTHS[c.month - 1]}, ${c.time}`;
+}
+
 /** Duración en minutos. @param {Event} event */
 export function durationMinutes(event) {
   return Math.round((Date.parse(event.endsAt) - Date.parse(event.startsAt)) / 60000);
@@ -195,8 +205,15 @@ export function seatAvailability(event) {
   return { label: "Cupos disponibles", tone: "default" };
 }
 
-/** Línea de metadatos de la tarjeta: "15:00–16:00 · Online vía Teams · Cupos ilimitados". @param {Event} event */
+/**
+ * Línea de metadatos de la tarjeta: "15:00–16:00 · Online vía Teams · Cupos ilimitados".
+ * Un evento realizado muestra solo cuándo y dónde (ni cupos, ni valor, ni "horario por confirmar").
+ * @param {Event & { status?: import("./event.js").EventStatus }} event
+ */
 export function metaLine(event) {
+  if (event.status === "finished") {
+    return [event.hasTime === false ? "" : formatSchedule(event), formatPlace(event)].filter(Boolean).join(" · ");
+  }
   return [formatSchedule(event), formatPlace(event), event.price ? formatPrice(event.price, event.currency) : formatCapacity(event)].join(" · ");
 }
 
@@ -219,6 +236,10 @@ export function eventFacts(event) {
   ];
   if (event.capacity !== null && event.seatsLeft !== null && event.status !== "finished") {
     facts.push({ label: "Cupos", value: event.seatsLeft === 0 ? "Agotados" : `${event.seatsLeft} disponibles` });
+  }
+  const deadline = formatRegistrationDeadline(event);
+  if (deadline && event.status !== "finished" && event.status !== "cancelled") {
+    facts.push({ label: event.registrationOpen ? "Inscripciones hasta" : "Inscripciones cerraron", value: deadline });
   }
   if (event.includes) facts.push({ label: "Incluye", value: event.includes });
   return facts;

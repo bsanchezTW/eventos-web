@@ -3,6 +3,9 @@
 /** @param {string} id */
 export const eventHref = (id) => `/eventos/${encodeURIComponent(id)}`;
 
+/** @param {string} slug */
+export const albumHref = (slug) => `/galeria/${encodeURIComponent(slug)}`;
+
 /** @param {string} categoryId */
 export const categoryHref = (categoryId) => `/?categoria=${encodeURIComponent(categoryId)}#calendario`;
 

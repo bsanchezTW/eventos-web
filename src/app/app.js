@@ -14,6 +14,8 @@ import { MAP_FRAME_ORIGINS } from "../features/events/domain/maps.js";
 import { createEventsFeature } from "../features/events/routes.js";
 import { createEventRepository, RepositoryError } from "../features/events/services/event-repository.js";
 import { createEventService } from "../features/events/services/event-service.js";
+import { createIntranetGalleryRepository, createMockGalleryRepository } from "../features/events/services/gallery-repository.js";
+import { createGalleryService } from "../features/events/services/gallery-service.js";
 import { createMemoryRegistrationGateway, createSupabaseRegistrationGateway } from "../features/events/services/registration-gateway.js";
 import { createRegistrationService } from "../features/events/services/registration-service.js";
 import { createSupabaseRpc } from "../features/events/services/supabase-rpc.js";
@@ -27,11 +29,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
  *   config: import("./config.js").AppConfig,
  *   repository?: import("../features/events/services/event-repository.js").EventRepository,
  *   gateway?: import("../features/events/services/registration-gateway.js").RegistrationGateway,
+ *   galleryRepository?: import("../features/events/services/gallery-repository.js").GalleryRepository,
  *   now?: () => Date,
  *   logger?: Pick<Console, "error" | "warn">
  * }} options
  */
-export function createApp({ config, repository, gateway, now, logger = console }) {
+export function createApp({ config, repository, gateway, galleryRepository, now, logger = console }) {
   const { url, key } = config.supabase;
   const rpc = config.events.source === "supabase" && url && key ? createSupabaseRpc({ url, key }) : null;
   const eventRepository =
@@ -44,18 +47,35 @@ export function createApp({ config, repository, gateway, now, logger = console }
     // Tras inscribir, la próxima lectura trae los cupos actualizados.
     onRegistered: () => eventRepository.invalidate?.(),
   });
+  const gallery = config.gallery;
+  const intranet = gallery.url && gallery.key ? { url: gallery.url, key: gallery.key } : null;
+  const galleryService = createGalleryService({
+    repository:
+      galleryRepository ??
+      (intranet
+        ? createIntranetGalleryRepository({ ...intranet, rpc: createSupabaseRpc(intranet), cacheTtlMs: gallery.cacheTtlMs, logger })
+        : createMockGalleryRepository()),
+    logger,
+  });
   const registrationLimiter = rateLimit({
     ...config.registrationLimit,
     message: "Hiciste muchos intentos seguidos. Espera unos minutos y vuelve a intentarlo.",
   });
-  const events = createEventsFeature({ eventService, registrationService, registrationLimiter, publicUrl: config.publicUrl, cacheAssets: config.isProduction });
+  const events = createEventsFeature({ eventService, galleryService, registrationService, registrationLimiter, publicUrl: config.publicUrl, cacheAssets: config.isProduction });
 
   const app = express();
   app.disable("x-powered-by");
   app.set("trust proxy", 1);
 
   app.use(compression());
-  app.use(securityHeaders({ imageOrigins: rpc && url ? [new URL(url).origin] : [], frameOrigins: MAP_FRAME_ORIGINS }));
+  const intranetOrigin = intranet ? [new URL(intranet.url).origin] : [];
+  app.use(
+    securityHeaders({
+      imageOrigins: [...(rpc && url ? [new URL(url).origin] : []), ...intranetOrigin],
+      frameOrigins: MAP_FRAME_ORIGINS,
+      mediaOrigins: intranetOrigin,
+    }),
+  );
 
   app.get("/health", (_req, res) => {
     res.json({ ok: true, source: config.events.source });

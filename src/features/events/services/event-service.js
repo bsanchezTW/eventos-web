@@ -63,17 +63,6 @@ export function createEventService({ repository, now = () => new Date() }) {
     },
 
     /**
-     * Galería agrupada por país, filtrable por tipo.
-     * @param {"todo" | "foto" | "video"} [type]
-     */
-    async getGallery(type = "todo") {
-      const all = await repository.listMedia();
-      const items = all.filter((m) => type === "todo" || m.type === type);
-      const countries = [...new Set(all.map((m) => m.country))];
-      return { all, items, groups: countries.map((country) => ({ country, items: items.filter((m) => m.country === country) })) };
-    },
-
-    /**
      * Detalle con evento padre (si es taller) y sub-eventos (si es principal).
      * @param {string} id
      */

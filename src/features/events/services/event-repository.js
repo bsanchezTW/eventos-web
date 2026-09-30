@@ -6,7 +6,6 @@
  */
 import { CATEGORIES } from "../data/categories.mock.js";
 import { EVENTS } from "../data/events.mock.js";
-import { GALLERY } from "../data/gallery.mock.js";
 import { normalizeEvent } from "../domain/event.js";
 import { RepositoryError } from "./errors.js";
 import { createSupabaseEventRepository } from "./supabase-event-repository.js";
@@ -15,23 +14,21 @@ export { RepositoryError };
 
 /** @typedef {import("../domain/event.js").Event} Event */
 /** @typedef {import("../domain/event.js").Category} Category */
-/** @typedef {import("../data/gallery.mock.js").MediaItem} MediaItem */
 
 /**
  * @typedef {object} EventRepository
  * @property {() => Promise<Event[]>} listEvents
  * @property {(id: string) => Promise<Event | null>} getEvent
  * @property {() => Promise<Category[]>} listCategories
- * @property {() => Promise<MediaItem[]>} listMedia
  * @property {() => void} [invalidate]  descarta la caché (p. ej. tras una inscripción, para refrescar cupos)
  */
 
 /**
  * Datos en memoria. `latencyMs` simula red para probar estados de carga.
- * @param {{ events?: Array<Record<string, any>>, categories?: Category[], media?: MediaItem[], latencyMs?: number }} [options]
+ * @param {{ events?: Array<Record<string, any>>, categories?: Category[], latencyMs?: number }} [options]
  * @returns {EventRepository}
  */
-export function createMockEventRepository({ events = EVENTS, categories = CATEGORIES, media = GALLERY, latencyMs = 0 } = {}) {
+export function createMockEventRepository({ events = EVENTS, categories = CATEGORIES, latencyMs = 0 } = {}) {
   const normalized = events.map(normalizeEvent);
   const byId = new Map(normalized.map((e) => [e.id, e]));
   const delay = () => (latencyMs > 0 ? new Promise((resolve) => setTimeout(resolve, latencyMs)) : Promise.resolve());
@@ -50,10 +47,6 @@ export function createMockEventRepository({ events = EVENTS, categories = CATEGO
       await delay();
       return categories.map((c) => ({ ...c }));
     },
-    async listMedia() {
-      await delay();
-      return media.map((m) => ({ ...m }));
-    },
   };
 }
 
@@ -62,7 +55,6 @@ export function createMockEventRepository({ events = EVENTS, categories = CATEGO
  *   GET {baseUrl}/events           → Event[]  (o { data: Event[] })
  *   GET {baseUrl}/events/:id       → Event    (404 si no existe)
  *   GET {baseUrl}/categories       → Category[]
- *   GET {baseUrl}/media            → MediaItem[] (galería)
  * Cada evento pasa por `normalizeEvent`; los inválidos se descartan con un warning.
  *
  * @param {{ baseUrl: string, fetchImpl?: typeof fetch, timeoutMs?: number, headers?: Record<string, string>, logger?: Pick<Console, "warn"> }} options
@@ -106,10 +98,6 @@ export function createApiEventRepository({ baseUrl, fetchImpl = fetch, timeoutMs
     },
     async listCategories() {
       const list = await request("/categories");
-      return Array.isArray(list) ? list : [];
-    },
-    async listMedia() {
-      const list = await request("/media");
       return Array.isArray(list) ? list : [];
     },
   };

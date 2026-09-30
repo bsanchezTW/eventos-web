@@ -1,26 +1,44 @@
 /**
- * Piezas de la galería (fotos y videos de eventos pasados), del template.
- * Sin `image` se muestra el placeholder rayado del sistema con su `slot`.
- *
- * @typedef {object} MediaItem
- * @property {string} id
- * @property {"foto" | "video"} type
- * @property {string | null} image
- * @property {string} slot
- * @property {string} date    Mes en mayúsculas ("JUNIO")
- * @property {string} place
- * @property {string} country
- * @property {string} title
+ * Álbumes de ejemplo para desarrollo (sin intranet configurada). Sin imágenes: se muestra el
+ * placeholder rayado del sistema.
  */
 
-/** @type {MediaItem[]} */
-export const GALLERY = [
-  { id: "m1", type: "foto", image: null, slot: "[ FOTO 16:10 · SALA LLENA ]", date: "JUNIO", place: "Santiago", country: "Chile", title: "Jornada Radwin: conectividad inalámbrica para minería" },
-  { id: "m2", type: "foto", image: null, slot: "[ FOTO 16:10 · DEMO TERRENO ]", date: "MAYO", place: "Antofagasta", country: "Chile", title: "Demo de enlaces punto a punto en faena" },
-  { id: "m3", type: "video", image: null, slot: "[ VIDEO 16:9 · RESUMEN 2 MIN ]", date: "MAYO", place: "Antofagasta", country: "Chile", title: "Resumen de la jornada norte en 2 minutos" },
-  { id: "m4", type: "foto", image: null, slot: "[ FOTO 16:10 · TALLER ]", date: "ABRIL", place: "Huechuraba", country: "Chile", title: "Taller práctico de certificación de redes" },
-  { id: "m5", type: "video", image: null, slot: "[ VIDEO 16:9 · CHARLA COMPLETA ]", date: "MARZO", place: "Webinar", country: "Chile", title: "Seguridad de máquinas: vallados y sensores" },
-  { id: "m6", type: "foto", image: null, slot: "[ FOTO 16:10 · SHOWROOM ]", date: "MARZO", place: "Santiago", country: "Chile", title: "Visita guiada al showroom de equipos" },
-  { id: "m7", type: "video", image: null, slot: "[ VIDEO 16:9 · ENTREVISTA ]", date: "ENERO", place: "Lima", country: "Perú", title: "Entrevista: continuidad operacional en salas críticas" },
-  { id: "m8", type: "foto", image: null, slot: "[ FOTO 16:10 · PREMIACIÓN ]", date: "ENERO", place: "Lima", country: "Perú", title: "Encuentro anual de integradores Perú" },
+/** @typedef {import("../domain/gallery.js").MediaItem} MediaItem */
+
+/**
+ * @param {string} slug
+ * @param {number} photos
+ * @param {number} [videos]
+ * @returns {MediaItem[]}
+ */
+function placeholderItems(slug, photos, videos = 0) {
+  return [
+    ...Array.from({ length: photos }, (_, i) => ({ id: `${slug}-f${i + 1}`, type: /** @type {const} */ ("foto"), thumb: null, src: null, slot: `[ FOTO ${i + 1} ]` })),
+    ...Array.from({ length: videos }, (_, i) => ({ id: `${slug}-v${i + 1}`, type: /** @type {const} */ ("video"), thumb: null, src: null, slot: `[ VIDEO ${i + 1} ]` })),
+  ];
+}
+
+/** @type {Array<{ slug: string, title: string, description: string, country: string, items: MediaItem[] }>} */
+export const ALBUMS = [
+  {
+    slug: "jornada-radwin-santiago",
+    title: "Jornada Radwin: conectividad inalámbrica para minería",
+    description: "Sala llena en Santiago para ver enlaces punto a punto y punto-multipunto.",
+    country: "Chile",
+    items: placeholderItems("jornada-radwin-santiago", 6, 1),
+  },
+  {
+    slug: "taller-certificacion-huechuraba",
+    title: "Taller práctico de certificación de redes",
+    description: "Certificación de enlaces con equipos reales en la casa matriz.",
+    country: "Chile",
+    items: placeholderItems("taller-certificacion-huechuraba", 4),
+  },
+  {
+    slug: "encuentro-integradores-lima",
+    title: "Encuentro anual de integradores Perú",
+    description: "Premiación y networking con los integradores de Lima.",
+    country: "Perú",
+    items: placeholderItems("encuentro-integradores-lima", 5),
+  },
 ];
