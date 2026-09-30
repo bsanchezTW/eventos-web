@@ -25,21 +25,12 @@ export const LANDING_CONTENT = {
   promoSlide: {
     kicker: "Inscripciones abiertas",
     title: "Capacitaciones, demos y webinars técnicos",
-    body: "Agenda oficial Transworld para Chile y Perú. Elige una fecha, reserva tu cupo en un minuto y recibe tu comprobante al instante.",
+    body: "Agenda oficial Transworld para Chile y Perú. Elige una fecha, reserva tu cupo en un minuto y recibe tu código QR de acceso por correo.",
     cta: "Ver próximas fechas",
-  },
-  gallerySlide: {
-    kicker: "Galería",
-    title: "Revive cada jornada técnica",
-    body: "Fotos y grabaciones de las sesiones en Santiago, Antofagasta y Lima, disponibles cuando quieras.",
-    cta: "Ver galería",
-  },
-  stats: {
-    formats: "Presencial · Webinar · En terreno",
   },
   calendar: {
     eyebrow: "Calendario",
-    title: "Próximas fechas",
+    title: "Agenda de eventos",
   },
   galleryTeaser: {
     eyebrow: "Galería",

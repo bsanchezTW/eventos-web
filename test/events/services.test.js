@@ -33,11 +33,22 @@ test("mock repository devuelve copias (la UI no puede mutar la fuente)", async (
   assert.equal(await repo.getEvent("no-existe"), null);
 });
 
-test("getLandingData: evento del hero y stats del template", async () => {
+test("getLandingData: próximo destacado, último realizado con foto propia y cifras del año", async () => {
   const { eventService } = setup();
-  const data = await eventService.getLandingData({ formatsLabel: "Presencial · Webinar · En terreno" });
-  assert.equal(data.heroEvent?.id, "certificacion-seguridad-maquinas");
-  assert.deepEqual(data.stats.map((s) => s.value), ["Jue 8 de octubre", "Presencial · Webinar · En terreno", "Santiago · Antofagasta · Lima"]);
+  const data = await eventService.getLandingData();
+  assert.equal(data.nextEvent?.id, "certificacion-seguridad-maquinas");
+  assert.equal(data.lastFinished, null, "los mock usan la foto genérica: ninguno tiene foto propia");
+  assert.deepEqual(data.summary.countries.sort(), ["Chile", "Perú"]);
+  assert.equal(data.summary.year, 2026);
+  assert.ok(data.summary.total > data.summary.finished && data.summary.openRegistrations > 0);
+
+  const withPhoto = createMockEventRepository({
+    events: [
+      { id: "viejo", title: "Viejo", category: "cctv", modality: "presencial", startsAt: "2026-08-01T10:00:00-04:00", image: "https://x/viejo.jpg" },
+      { id: "sin-foto", title: "Sin foto", category: "cctv", modality: "presencial", startsAt: "2026-09-01T10:00:00-03:00" },
+    ],
+  });
+  assert.equal((await setup(withPhoto).eventService.getLandingData()).lastFinished?.id, "viejo", "el último realizado que tiene foto propia");
 });
 
 test("getWebinars", async () => {

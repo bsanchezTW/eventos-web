@@ -12,7 +12,7 @@
  * SQL de la intranet: intranet-web/supabase/shared/schema.sql (sección "Web pública de eventos").
  */
 import { ALBUMS } from "../data/gallery.mock.js";
-import { countryName } from "../domain/gallery.js";
+import { PREVIEW_COUNT, countryName } from "../domain/gallery.js";
 import { RepositoryError } from "./errors.js";
 
 /** @typedef {import("../domain/gallery.js").Album} Album */
@@ -33,7 +33,10 @@ const counts = (items) => ({ photos: items.filter((i) => i.type === "foto").leng
  */
 export function createMockGalleryRepository({ albums = ALBUMS } = {}) {
   /** @param {(typeof ALBUMS)[number]} a @returns {Album} */
-  const toAlbum = (a) => ({ slug: a.slug, title: a.title, description: a.description, country: a.country, cover: a.items.find((i) => i.type === "foto") ?? null, ...counts(a.items) });
+  const toAlbum = (a) => {
+    const previews = a.items.filter((i) => i.type === "foto").slice(0, PREVIEW_COUNT);
+    return { slug: a.slug, title: a.title, description: a.description, country: a.country, cover: previews[0] ?? null, previews, ...counts(a.items) };
+  };
   return {
     async listAlbums() {
       return albums.map(toAlbum);
@@ -75,6 +78,13 @@ export function coverFile(raw) {
     path = "";
   }
   return photos.find((f) => f.ruta === path) ?? photos[0] ?? null;
+}
+
+/** Fotos de muestra: la portada y las siguientes, hasta PREVIEW_COUNT. @param {RawAlbum} raw */
+export function previewFiles(raw) {
+  const cover = coverFile(raw);
+  const photos = raw.archivos.filter((f) => mediaType(f.tipo) === "foto" && f !== cover);
+  return (cover ? [cover, ...photos] : photos).slice(0, PREVIEW_COUNT);
 }
 
 /**
@@ -178,6 +188,16 @@ export function createIntranetGalleryRepository({
     return `${storage}${signed}`;
   }
 
+  /** Portada en grande para el fondo del hero; si no hay transformación, el original. @param {RawFile} file */
+  async function signLarge(file) {
+    if (!transformsAvailable) return null;
+    const res = await post(`/object/sign/${encodeURIComponent(file.bucket)}/${encodePath(file.ruta)}`, {
+      expiresIn: signExpiresS,
+      transform: { width: 1920, quality: 75 },
+    });
+    return res.ok && typeof res.json?.signedURL === "string" ? `${storage}${res.json.signedURL}` : null;
+  }
+
   /** @param {RawFile} file @param {Map<string, string>} full @returns {Promise<MediaItem>} */
   async function toItem(file, full) {
     const type = mediaType(file.tipo) ?? "foto";
@@ -186,15 +206,16 @@ export function createIntranetGalleryRepository({
     return { id: `${file.bucket}/${file.ruta}`, type, thumb, src, slot: type === "video" ? "[ VIDEO ]" : "[ FOTO ]" };
   }
 
-  /** @param {RawAlbum} raw @param {MediaItem | null} cover @returns {Album} */
-  function toAlbum(raw, cover) {
+  /** @param {RawAlbum} raw @param {MediaItem[]} previews @returns {Album} */
+  function toAlbum(raw, previews) {
     const files = raw.archivos.filter((f) => mediaType(f.tipo));
     return {
       slug: raw.slug,
       title: String(raw.nombre ?? "").trim(),
       description: String(raw.descripcion ?? "").trim(),
       country: countryName(raw.pais),
-      cover,
+      cover: previews[0] ?? null,
+      previews,
       photos: files.filter((f) => mediaType(f.tipo) === "foto").length,
       videos: files.filter((f) => mediaType(f.tipo) === "video").length,
     };
@@ -204,10 +225,14 @@ export function createIntranetGalleryRepository({
     transformsAvailable = true;
     const rows = await rpc("galeria_web");
     const raws = /** @type {RawAlbum[]} */ (Array.isArray(rows) ? rows : []).map((r) => ({ ...r, archivos: Array.isArray(r.archivos) ? r.archivos : [] }));
-    const coverFiles = raws.map(coverFile);
-    const full = await signFull(coverFiles.filter((f) => f !== null));
-    const covers = await mapLimit(coverFiles, concurrency, (f) => (f ? toItem(f, full) : Promise.resolve(null)));
-    return raws.map((raw, i) => ({ raw, album: toAlbum(raw, covers[i]) }));
+    const previewSets = raws.map(previewFiles);
+    const full = await signFull(previewSets.flat());
+    const previews = await mapLimit(previewSets, concurrency, async (files) => {
+      const items = await Promise.all(files.map((f) => toItem(f, full)));
+      if (items[0]) items[0].large = (await signLarge(files[0])) ?? items[0].src;
+      return items;
+    });
+    return raws.map((raw, i) => ({ raw, album: toAlbum(raw, previews[i]) }));
   }
 
   /** @type {{ at: number, data: ReturnType<typeof loadList> } | null} */

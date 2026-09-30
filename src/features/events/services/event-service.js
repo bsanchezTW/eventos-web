@@ -1,9 +1,9 @@
 /**
  * Casos de uso de la agenda. Única puerta de entrada a los datos para páginas y API.
  */
-import { toEventViews } from "../domain/event.js";
+import { hasOwnImage, isRegistrationOpen, toEventViews } from "../domain/event.js";
 import { buildExplorer, isListable, sortEvents } from "../domain/explorer.js";
-import { eventMonthKey, formatShortDate, modalityLabel } from "../domain/format.js";
+import { eventMonthKey, zonedParts } from "../domain/format.js";
 
 /** @typedef {import("../domain/event.js").EventView} EventView */
 /** @typedef {import("../domain/event.js").Category} Category */
@@ -31,26 +31,32 @@ export function createEventService({ repository, now = () => new Date() }) {
     },
 
     /**
-     * Datos de la landing (excepto el explorador): evento del hero y stats.
-     * @param {{ formatsLabel?: string }} [options] texto editorial para "Formatos" (si no, se deriva)
+     * Datos de la landing (excepto el explorador), solo con información real:
+     * - `nextEvent`: el destacado por comenzar o, si no hay, el próximo.
+     * - `lastFinished`: el último realizado con foto propia (el hero no usa fotos de otros eventos).
+     * - `summary`: cifras del año para las tarjetas bajo el hero (no repiten nombres ni fechas del hero).
      */
-    async getLandingData({ formatsLabel } = {}) {
+    async getLandingData() {
       const { views } = await loadViews();
-      const open = sortEvents(views.filter((e) => e.status === "upcoming" || e.status === "live"), "fecha").filter(isListable);
+      const top = views.filter(isListable);
+      const open = sortEvents(top.filter((e) => e.status === "upcoming" || e.status === "live"), "fecha");
+      const nextEvent = open.find((e) => e.featured && e.status === "upcoming") ?? open.find((e) => e.status === "upcoming") ?? open[0] ?? null;
+      const lastFinished = sortEvents(top.filter((e) => e.status === "finished"), "fecha").find(hasOwnImage) ?? null;
 
-      const heroEvent = open.find((e) => e.featured && e.status === "upcoming") ?? null;
-      const next = open.find((e) => e.status === "upcoming") ?? open[0];
-      const cities = [...new Set(open.filter((e) => !e.location.online).map((e) => e.location.city))];
-      const stats = [
-        { label: "Próxima fecha", value: next ? formatShortDate(next) : "Por anunciar" },
-        { label: "Formatos", value: formatsLabel ?? ([...new Set(open.map(modalityLabel))].join(" · ") || "—") },
-        { label: "Sedes", value: cities.join(" · ") || "Online" },
-      ];
+      const year = zonedParts(now(), "America/Santiago").year;
+      const thisYear = top.filter((e) => e.status !== "cancelled" && zonedParts(e.startsAt, e.timezone).year === year);
+      const summary = {
+        year,
+        total: thisYear.length,
+        finished: thisYear.filter((e) => e.status === "finished").length,
+        countries: [...new Set(thisYear.map((e) => e.location.country).filter(Boolean))],
+        openRegistrations: open.filter(isRegistrationOpen).length,
+      };
 
       // Meses con inscripciones abiertas (eventos por comenzar), para el kicker del hero.
       const openMonths = [...new Set(open.filter((e) => e.status === "upcoming").map(eventMonthKey))].sort();
 
-      return { heroEvent, stats, openMonths };
+      return { nextEvent, lastFinished, summary, openMonths };
     },
 
     /** Webinars: próximos (por fecha) y grabaciones (más recientes primero). */

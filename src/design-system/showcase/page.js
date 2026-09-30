@@ -133,6 +133,7 @@ export function renderShowcasePage({ tokens }) {
           ${Specimen({ label: "StatCard · IconCircle", children: html`${StatCard({ label: "Próxima fecha", value: "Jue 8 de octubre" })}${IconCircle()}${IconCircle({ icon: "fiber" })}` })}
           ${Specimen({ label: "MediaFrame", children: html`<div class="tw-tile tw-w-full">${MediaFrame({ slot: "[ FOTO 16:10 ]", badge: Badge({ label: "Foto", variant: "light" }), caption: "Placeholder hasta cargar imagen real" })}</div>` })}
           ${Specimen({ label: "MapFrame (Google Maps)", children: html`<div class="tw-w-full">${MapFrame({ src: "https://maps.google.com/maps?q=Calle%20Nueva%201890%2C%20Huechuraba&output=embed", title: "Mapa: casa matriz Transworld" })}</div>` })}
+          ${Specimen({ label: "Card · row · muted (ya ocurrió)", block: true, children: Card({ layout: "row", muted: true, children: html`${DateBadge({ day: "25", month: "AGO" })}<div>${Heading({ level: 3, variant: "title", children: "Evento realizado" })}<p class="tw-card__meta">Misma estructura, en grises</p></div>` }) })}
           ${Specimen({ label: "Card · row", block: true, children: Card({ layout: "row", children: html`${DateBadge({ day: "15", month: "OCT" })}<div>${Heading({ level: 3, variant: "title", children: "Tarjeta en fila" })}<p class="tw-card__meta">Visual fijo + contenido</p></div>` }) })}
           ${Specimen({ label: "FactList · Timeline · CodeDisplay", block: true, children: html`<div class="tw-stack tw-gap-4">${FactList({ items: [{ label: "Fecha", value: "Jueves 8 de octubre" }, { label: "Valor", value: "Sin costo" }] })}${Timeline({ items: [{ time: "15:00", title: "Apertura", detail: "Equipo Transworld" }] })}${CodeDisplay({ value: "TW-DEMO-4821" })}</div>` })}
           `,
@@ -176,7 +177,7 @@ export function renderShowcasePage({ tokens }) {
       children: html`${SectionHeader({ eyebrow: "Patrones", title: "Calendario, banners y bandas CTA" })}
         ${Grid({
           min: 340,
-          children: html`${Card({ variant: "panel", children: MonthCalendar({ year: 2026, month: 10, title: "Octubre 2026", titleId: "sg-cal", markers: { 8: 1, 15: 2, 22: 1 }, selected: 15, legend: [{ label: "Con evento" }, { label: "Seleccionado", tone: "brand" }] }) })}
+          children: html`${Card({ variant: "panel", children: MonthCalendar({ year: 2026, month: 10, title: "Octubre 2026", titleId: "sg-cal", markers: { 8: 1, 15: 2, 22: 1 }, past: [8], selected: 15, nav: { prev: { label: "Ver septiembre" }, next: null }, legend: [{ label: "Próximo" }, { label: "Realizado", tone: "muted" }, { label: "Seleccionado", tone: "brand" }] }) })}
             ${Banner({ image: { src: BRAND.heroImage }, headingLevel: 2, badges: html`${Badge({ label: "Capacitación", variant: "accent" })}${Badge({ label: "Energía", variant: "on-dark" })}`, title: "Banner de detalle", text: "Imagen al 30% + gradiente diagonal navy." })}`,
         })}
         <div class="tw-stack tw-gap-4 tw-mt-5">

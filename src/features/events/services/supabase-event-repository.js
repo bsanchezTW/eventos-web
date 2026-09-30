@@ -14,7 +14,7 @@
  * - La ciudad se toma del último tramo de la dirección ("Av. Vitacura 2885, Las Condes").
  * - El mapa (`mapa_url`) lo carga el staff en la app; los talleres usan el del evento.
  */
-import { normalizeEvent } from "../domain/event.js";
+import { DEFAULT_EVENT_IMAGE, normalizeEvent } from "../domain/event.js";
 import { foldText, zonedParts } from "../domain/format.js";
 
 /** @typedef {import("../domain/event.js").Event} Event */
@@ -22,7 +22,6 @@ import { foldText, zonedParts } from "../domain/format.js";
 /** @typedef {import("./event-repository.js").EventRepository} EventRepository */
 /** @typedef {import("./supabase-rpc.js").SupabaseRpc} SupabaseRpc */
 
-const DEFAULT_IMAGE = "/media/eventos/casa-matriz.jpg";
 const DEFAULT_IMAGE_ALT = "Edificio de la casa matriz de Transworld en Huechuraba";
 const DAY_MS = 86_400_000;
 const ONLINE = /\b(online|webinar|teams|zoom|google meet)\b/i;
@@ -97,8 +96,8 @@ export function toRawEvents(row, { featured = false } = {}) {
   const label = online ? undefined : [venue, city].filter(Boolean).join(", ") || undefined;
   const category = categoryFromTopic(row.tematica).id;
   const description = clean(row.descripcion) ? String(row.descripcion).trim() : "";
-  const image = clean(row.imagen_url) || DEFAULT_IMAGE;
-  const imageAlt = image === DEFAULT_IMAGE ? DEFAULT_IMAGE_ALT : "";
+  const image = clean(row.imagen_url) || DEFAULT_EVENT_IMAGE;
+  const imageAlt = image === DEFAULT_EVENT_IMAGE ? DEFAULT_IMAGE_ALT : "";
   const currency = timezone === "America/Lima" ? "PEN" : "CLP";
   const subevents = Array.isArray(row.subeventos) ? row.subeventos : [];
   const seatsLeft = seats(row.cupo, row.agotado === true);
@@ -194,7 +193,10 @@ export function createSupabaseEventRepository({ rpc, cacheTtlMs = 30_000, pastDa
   async function load() {
     const today = clock();
     const day = (/** @type {number} */ offset) => new Date(today + offset * DAY_MS).toISOString().slice(0, 10);
-    const rows = await rpc("rpe_publico_calendario", { p_desde: day(-pastDays), p_hasta: day(futureDays) });
+    // Desde el 1 de enero como mínimo: las cifras del año en la landing cuentan todo el año.
+    const yearStart = `${new Date(today).getUTCFullYear()}-01-01`;
+    const from = day(-pastDays) < yearStart ? day(-pastDays) : yearStart;
+    const rows = await rpc("rpe_publico_calendario", { p_desde: from, p_hasta: day(futureDays) });
     const list = Array.isArray(rows) ? rows : [];
 
     // Detalle (cupos y talleres) solo de los vigentes; si uno falla, queda con los datos del calendario.
@@ -213,12 +215,16 @@ export function createSupabaseEventRepository({ rpc, cacheTtlMs = 30_000, pastDa
     const featured = detailed.find((/** @type {any} */ row) => row.estado === "proximo" && row.registro_abierto && !row.agotado);
     const events = detailed.flatMap((/** @type {any} */ row) => toRawEvents(row, { featured: row === featured })).map(safeNormalize).filter((e) => e !== null);
 
-    // Filtros de la agenda: temáticas de los eventos que aún no terminan.
+    // Todas las temáticas (el nombre se muestra también en eventos realizados); solo las de
+    // eventos vigentes se ofrecen como filtro (`active`).
     /** @type {Map<string, Category>} */
     const categories = new Map();
     for (const row of detailed) {
       const topic = categoryFromTopic(row.tematica);
-      if (row.estado !== "finalizado" && !categories.has(topic.id)) categories.set(topic.id, topic);
+      const current = categories.get(topic.id);
+      const active = row.estado !== "finalizado";
+      if (!current) categories.set(topic.id, { ...topic, active });
+      else if (active) current.active = true;
     }
     return { events, categories: [...categories.values()].sort((a, b) => a.name.localeCompare(b.name, "es")) };
   }

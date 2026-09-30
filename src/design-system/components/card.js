@@ -15,11 +15,11 @@ import { attrs, cx, html } from "../utils/html.js";
  *
  * @param {{
  *   children: Renderable, variant?: "default" | "panel" | "raised" | "dashed", layout?: "row" | "split" | "column" | "media",
- *   lift?: boolean, roomy?: boolean, compact?: boolean, flush?: boolean, bordered?: boolean, interactive?: boolean,
+ *   lift?: boolean, roomy?: boolean, compact?: boolean, flush?: boolean, bordered?: boolean, interactive?: boolean, muted?: boolean,
  *   as?: "div" | "article" | "section" | "li" | "aside" | "button", className?: string, attrs?: Record<string, unknown>
  * }} props
  */
-export function Card({ children, variant = "default", layout, lift = false, roomy = false, compact = false, flush = false, bordered = false, interactive = false, as = "div", className, attrs: extra }) {
+export function Card({ children, variant = "default", layout, lift = false, roomy = false, compact = false, flush = false, bordered = false, interactive = false, muted = false, as = "div", className, attrs: extra }) {
   const classes = cx(
     "tw-card",
     variant !== "default" && `tw-card--${variant}`,
@@ -30,6 +30,7 @@ export function Card({ children, variant = "default", layout, lift = false, room
     flush && "tw-card--flush",
     bordered && "tw-card--bordered",
     interactive && "tw-card--interactive",
+    muted && "tw-card--muted",
     className,
   );
   return html`<${as} class="${classes}"${attrs(extra)}>${children}</${as}>`;

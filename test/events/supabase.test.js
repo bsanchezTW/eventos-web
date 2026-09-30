@@ -125,9 +125,16 @@ test("repositorio Supabase: detalle solo de vigentes, caché e invalidación", a
   const events = await repo.listEvents();
   assert.deepEqual(events.map((e) => e.id), ["certificacion-altai-8t4v", "transworld-connect-k3f9", "transworld-connect-k3f9--a7k2mq", "transworld-connect-k3f9--b8m3np"]);
   assert.deepEqual(calls.map((c) => c.name), ["rpe_publico_calendario", "rpe_publico_evento"], "el finalizado no pide detalle");
-  assert.deepEqual(calls[0].body, { p_desde: "2026-04-02", p_hasta: "2027-09-29" });
+  assert.deepEqual(calls[0].body, { p_desde: "2026-01-01", p_hasta: "2027-09-29" });
   assert.equal(calls[0].apikey, "sb_publishable_test");
-  assert.deepEqual((await repo.listCategories()).map((c) => c.name), ["Telecomunicaciones, TI, Seguridad de máquinas"], "solo temáticas vigentes");
+  assert.deepEqual(
+    (await repo.listCategories()).map((c) => [c.name, c.active]),
+    [
+      ["Certificación", false],
+      ["Telecomunicaciones, TI, Seguridad de máquinas", true],
+    ],
+    "todas las temáticas (para mostrar su nombre); solo las vigentes filtran",
+  );
   assert.equal((await repo.getEvent("transworld-connect-k3f9--a7k2mq"))?.title, "Taller IA");
   assert.equal(calls.length, 2, "dentro del TTL no vuelve a consultar");
 

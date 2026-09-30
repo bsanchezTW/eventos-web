@@ -9,16 +9,16 @@ import { albumHref } from "../domain/links.js";
 /** @typedef {import("../domain/gallery.js").Album} Album */
 /** @typedef {import("../domain/gallery.js").MediaItem} MediaItem */
 
-/** Teaser: portadas 4:5 de los álbumes más recientes, cada una lleva a su álbum. @param {{ albums: Album[] }} props */
-export function GalleryTeaser({ albums }) {
+/** Teaser: fotos 4:5 de los álbumes más recientes; cada una lleva a su álbum. @param {{ tiles: Array<{ album: Album, item: MediaItem }> }} props */
+export function GalleryTeaser({ tiles }) {
   return Grid({
     min: 200,
     gap: "3-5",
     as: "ul",
-    children: albums.map(
-      (album) => html`<li>
+    children: tiles.map(
+      ({ album, item }) => html`<li>
         <a class="tw-tile" href="${albumHref(album.slug)}" aria-label="${album.title}: ver álbum">
-          ${MediaFrame({ src: album.cover?.thumb, alt: "", ratio: "4x5", slot: "[ FOTO 4:5 ]", caption: album.title })}
+          ${MediaFrame({ src: item.thumb, alt: "", ratio: "4x5", slot: "[ FOTO 4:5 ]", caption: album.title })}
         </a>
       </li>`,
     ),

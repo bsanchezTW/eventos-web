@@ -76,6 +76,12 @@
   justify-content: space-between;
 }
 
+/* Filas del mismo alto: igualan a la columna vecina (escritorio) o a la más alta (una columna) */
+.tw-stack--fill {
+  display: grid;
+  grid-auto-rows: 1fr;
+}
+
 .tw-cluster {
   display: flex;
   flex-wrap: wrap;

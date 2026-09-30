@@ -66,6 +66,7 @@ import { embeddableMapUrl } from "./maps.js";
  * @property {string} name
  * @property {string} description
  * @property {string} icon   nombre de ícono del Design System
+ * @property {boolean} [active]  false si solo tiene eventos realizados (no se ofrece como filtro)
  */
 
 /**
@@ -87,6 +88,12 @@ export const STATUS_LABELS = /** @type {const} */ ({
   finished: "Finalizado",
   cancelled: "Cancelado",
 });
+
+/** Foto genérica (casa matriz) para eventos sin imagen propia. */
+export const DEFAULT_EVENT_IMAGE = "/media/eventos/casa-matriz.jpg";
+
+/** true si el evento tiene una foto propia (no la genérica). @param {Pick<Event, "image">} event */
+export const hasOwnImage = (event) => Boolean(event.image) && event.image !== DEFAULT_EVENT_IMAGE;
 
 export class InvalidEventError extends Error {
   /** @param {string} message @param {unknown} [raw] */

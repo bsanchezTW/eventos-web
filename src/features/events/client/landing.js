@@ -44,6 +44,9 @@ function initExplorer() {
   /** Clave de foco para recuperarlo tras el re-render. @param {Element | null} el */
   function focusKey(el) {
     if (!el || !results.contains(el)) return null;
+    // Selector de mes del calendario: se vuelve a la misma flecha (su data-month cambia al navegar).
+    const nav = el.closest(".tw-calendar__nav");
+    if (nav) return `.tw-calendar__nav .tw-icon-btn:${el === nav.firstElementChild ? "first" : "last"}-child`;
     for (const attr of ["data-action", "data-day", "data-month"]) {
       const value = el.getAttribute(attr);
       if (value) return `[${attr}="${CSS.escape(value)}"]`;
@@ -58,7 +61,11 @@ function initExplorer() {
     monthTabs?.querySelectorAll("[data-month]").forEach((tab) => {
       tab.setAttribute("aria-pressed", String(tab.getAttribute("data-month") === resolvedMonth));
     });
-    if (key !== null) /** @type {HTMLElement} */ ((key && results.querySelector(key)) || results).focus({ preventScroll: true });
+    if (key === null) return;
+    let target = /** @type {HTMLButtonElement | null} */ (key ? results.querySelector(key) : null);
+    // Una flecha que quedó deshabilitada (primer o último mes) no recibe foco: pasa a la otra.
+    if (target?.disabled) target = /** @type {HTMLButtonElement | null} */ (target.closest(".tw-calendar__nav")?.querySelector(".tw-icon-btn:not(:disabled)") ?? null);
+    (target ?? results).focus({ preventScroll: true });
   }
 
   /** @param {Partial<ExplorerQuery>} patch */

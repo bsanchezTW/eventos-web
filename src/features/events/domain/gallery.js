@@ -13,6 +13,7 @@
  * @property {MediaType} type
  * @property {string | null} thumb  miniatura para grillas (null = placeholder del sistema)
  * @property {string | null} src    tamaño completo para el lightbox
+ * @property {string | null} [large] versión grande para fondos (solo la portada del álbum)
  * @property {string} slot          texto del placeholder cuando no hay imagen
  */
 
@@ -23,9 +24,13 @@
  * @property {string} description
  * @property {string} country       "Chile" | "Perú"
  * @property {MediaItem | null} cover
+ * @property {MediaItem[]} previews  hasta PREVIEW_COUNT fotos (la portada primero) para el teaser
  * @property {number} photos
  * @property {number} videos
  */
+
+/** Fotos de muestra por álbum: la portada va al hero de la landing y las demás al teaser. */
+export const PREVIEW_COUNT = 5;
 
 /** Orden de los grupos: Chile, Perú y cualquier otro después. */
 const COUNTRY_ORDER = ["Chile", "Perú"];

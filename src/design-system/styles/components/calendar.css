@@ -1,6 +1,24 @@
 /* Calendario mensual: celdas redondas, días con marca lime, seleccionado navy */
+.tw-calendar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--tw-space-3);
+  min-height: 36px;
+  margin-bottom: var(--tw-space-4);
+}
+
+.tw-calendar__nav {
+  display: flex;
+  gap: var(--tw-space-1-5);
+}
+
+.tw-calendar__nav .tw-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 .tw-calendar__title {
-  margin-bottom: var(--tw-space-4-5);
   font-size: var(--tw-text-title-sm);
   font-weight: var(--tw-weight-bold);
   line-height: 1;
@@ -59,6 +77,16 @@ button.tw-calendar__day {
 
 .tw-calendar__day--marked:hover {
   background: var(--tw-tint-accent-40);
+}
+
+/* Días con eventos ya realizados: marca gris */
+.tw-calendar__day--past {
+  background: var(--tw-gray-75);
+  color: var(--tw-color-text-control);
+}
+
+.tw-calendar__day--past:hover {
+  background: var(--tw-gray-200);
 }
 
 .tw-calendar__day--today {

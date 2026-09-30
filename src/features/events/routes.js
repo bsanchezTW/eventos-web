@@ -17,7 +17,6 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
 import { parseExplorerQuery } from "./domain/explorer.js";
-import { LANDING_CONTENT } from "./data/landing-content.js";
 import { renderEventDetailPage } from "./pages/event-detail.page.js";
 import { renderAlbumPage } from "./pages/album.page.js";
 import { renderGalleryPage } from "./pages/gallery.page.js";
@@ -67,17 +66,18 @@ export function createEventsFeature({ eventService, galleryService, registration
   const api = express.Router();
   const assets = express.Router();
 
-  const categoryRefs = async () => (await eventService.listCategories()).map(({ id, name }) => ({ id, name }));
+  // Filtros, avisos y pie: solo líneas con eventos vigentes (las de eventos realizados no filtran nada útil).
+  const categoryRefs = async () => (await eventService.listCategories()).filter((c) => c.active !== false).map(({ id, name }) => ({ id, name }));
 
   pages.get("/", async (req, res) => {
     const query = parseExplorerQuery(/** @type {Record<string, unknown>} */ (req.query));
-    const [landing, explorer, teaser, categories] = await Promise.all([
-      eventService.getLandingData({ formatsLabel: LANDING_CONTENT.stats.formats }),
+    const [landing, explorer, gallery, categories] = await Promise.all([
+      eventService.getLandingData(),
       eventService.explore(query),
-      galleryService.getTeaser(),
+      galleryService.getLandingGallery(),
       categoryRefs(),
     ]);
-    res.type("html").send(String(renderLandingPage({ landing, explorer, teaser, categories, canonical: publicUrl ? `${publicUrl}/` : undefined })));
+    res.type("html").send(String(renderLandingPage({ landing, gallery, explorer, categories, canonical: publicUrl ? `${publicUrl}/` : undefined })));
   });
 
   pages.get("/galeria", async (_req, res) => {

@@ -76,9 +76,12 @@ export function Grid({ children, min = 260, gap = "4", fill = false, as = "div",
   return html`<${as} class="${cx("tw-grid", `tw-grid--min-${min}`, `tw-gap-${gap}`, fill && "tw-grid--fill", className)}"${attrs({ ...role, ...extra })}>${children}</${as}>`;
 }
 
-/** @param {{ children: Renderable, gap?: string, between?: boolean, className?: string, as?: "div" | "ul", attrs?: Record<string, unknown> }} props */
-export function Stack({ children, gap = "4", between = false, className, as = "div", attrs: extra }) {
-  return html`<${as} class="${cx("tw-stack", `tw-gap-${gap}`, between && "tw-stack--between", className)}"${attrs(extra)}>${children}</${as}>`;
+/**
+ * `fill`: todos los hijos con el mismo alto (igualan a la columna vecina o, en una columna, al más alto).
+ * @param {{ children: Renderable, gap?: string, between?: boolean, fill?: boolean, className?: string, as?: "div" | "ul", attrs?: Record<string, unknown> }} props
+ */
+export function Stack({ children, gap = "4", between = false, fill = false, className, as = "div", attrs: extra }) {
+  return html`<${as} class="${cx("tw-stack", `tw-gap-${gap}`, between && "tw-stack--between", fill && "tw-stack--fill", className)}"${attrs(extra)}>${children}</${as}>`;
 }
 
 /** @param {{ children: Renderable, gap?: string, between?: boolean, className?: string, as?: "div" | "ul", attrs?: Record<string, unknown> }} props */

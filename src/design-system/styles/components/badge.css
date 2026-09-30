@@ -115,6 +115,18 @@
 }
 
 /* Punto y leyenda */
+/* Una sola línea con "…" (p. ej. temáticas largas en tarjetas) */
+.tw-badge--truncate {
+  min-width: 0;
+}
+
+.tw-badge__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .tw-dot {
   display: block;
   flex-shrink: 0;
@@ -126,6 +138,10 @@
 
 .tw-dot--brand {
   background: var(--tw-color-brand);
+}
+
+.tw-dot--muted {
+  background: var(--tw-gray-400);
 }
 
 .tw-legend {

@@ -41,10 +41,15 @@ function CalendarPanel({ calendar, selectedDay }) {
       title: calendar.title,
       titleId: "explorer-calendar-title",
       markers: calendar.markers,
+      past: calendar.past,
+      nav: {
+        prev: calendar.prev ? { label: `Ver ${calendar.prev.label.toLowerCase()}`, attrs: { "data-month": calendar.prev.key } } : null,
+        next: calendar.next ? { label: `Ver ${calendar.next.label.toLowerCase()}`, attrs: { "data-month": calendar.next.key } } : null,
+      },
       selected: selectedDay ? Number(selectedDay.slice(8)) : null,
       today: calendar.today,
       dayLabel: (day, count) => `${day} de ${lower}: ${count} ${count === 1 ? "evento" : "eventos"}`,
-      legend: [{ label: "Con evento" }, { label: "Seleccionado", tone: "brand" }],
+      legend: [{ label: "Próximo" }, { label: "Realizado", tone: "muted" }, { label: "Seleccionado", tone: "brand" }],
       attrs: { "data-explorer-calendar": "" },
     }),
   });
@@ -62,8 +67,9 @@ function MonthEmpty({ explorer }) {
 }
 
 /**
- * Columna junto al calendario: las fechas del mes y, si sobra espacio, lo realizado más reciente
- * (fuera de ese mes) para que la agenda no quede vacía entre temporadas.
+ * Columna junto al calendario: siempre MONTH_LIST_LIMIT tarjetas del mismo alto que el calendario.
+ * Primero las fechas del mes; si faltan, lo realizado más reciente de otros meses (en gris y con
+ * su fecha, así se distingue sin rótulos extra que desalineen la columna).
  * @param {{ explorer: ExplorerResult }} props
  */
 function MonthColumn({ explorer }) {
@@ -72,14 +78,7 @@ function MonthColumn({ explorer }) {
   const visible = monthItems.slice(0, MONTH_LIST_LIMIT);
   const room = query.day ? 0 : MONTH_LIST_LIMIT - visible.length;
   const recent = room > 0 ? seasonItems.filter((e) => e.status === "finished" && !monthItems.includes(e)).slice(0, room) : [];
-  return Stack({
-    gap: "3-5",
-    children: html`${visible.map((event) => EventCard({ event }))}
-      ${recent.length
-        ? html`${Eyebrow({ children: "Realizados recientemente", as: "p", tone: "muted", className: "tw-mt-2" })}
-          ${recent.map((event) => EventCard({ event, showFeatured: false }))}`
-        : ""}`,
-  });
+  return Stack({ gap: "3-5", fill: true, children: [...visible, ...recent].map((event) => EventCard({ event, showFeatured: false })) });
 }
 
 /** Temporada completa: próximas fechas y, aparte, lo ya realizado. @param {{ items: ExplorerResult["seasonItems"] }} props */
@@ -136,7 +135,7 @@ export function ExplorerSkeleton() {
       min: 360,
       gap: "5-5",
       children: html`${Card({ variant: "panel", children: html`<div class="tw-stack tw-gap-3">${Skeleton({ shape: "title", width: 40 })}${Skeleton({ shape: "block", className: "tw-skeleton--tall" })}</div>` })}
-        ${Stack({ gap: "3-5", between: true, children: [card, card] })}`,
+        ${Stack({ gap: "3-5", fill: true, children: [card, card] })}`,
     })}
   </div>`;
 }

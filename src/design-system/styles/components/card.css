@@ -63,6 +63,28 @@
   }
 }
 
+/* Algo que ya ocurrió (evento realizado): misma estructura, en grises */
+.tw-card--muted {
+  background: var(--tw-color-surface-sunken);
+}
+
+.tw-card--muted .tw-date-badge {
+  background: var(--tw-gray-600);
+}
+
+.tw-card--muted .tw-date-badge__month {
+  color: var(--tw-color-text-on-dark-muted);
+}
+
+.tw-card--muted .tw-heading,
+.tw-card--muted .tw-card__link {
+  color: var(--tw-color-text-body);
+}
+
+.tw-card--muted .tw-badge {
+  filter: grayscale(1);
+}
+
 /* Tarjeta de contenido + acción alineada a la derecha (se apila en móvil) */
 .tw-card--split {
   display: grid;
@@ -111,6 +133,20 @@
   flex-wrap: wrap;
   gap: var(--tw-space-2);
   margin-bottom: 9px;
+}
+
+/* Badges en una sola fila: los fijos no se encogen; los truncables ceden espacio */
+.tw-card__badges--single {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.tw-card__badges--single > .tw-badge {
+  flex-shrink: 0;
+}
+
+.tw-card__badges--single > .tw-badge--truncate {
+  flex-shrink: 1;
 }
 
 .tw-card__body > .tw-card__badges {

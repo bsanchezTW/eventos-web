@@ -9,7 +9,7 @@
  */
 
 // Única foto disponible en el template; reemplazar por imágenes reales de cada evento.
-const PHOTO = "/media/eventos/casa-matriz.jpg";
+const PHOTO = "/media/eventos/casa-matriz.jpg"; // = DEFAULT_EVENT_IMAGE (foto genérica)
 const PHOTO_ALT = "Edificio de la casa matriz de Transworld en Huechuraba";
 const SANTIAGO = "America/Santiago";
 const LIMA = "America/Lima";

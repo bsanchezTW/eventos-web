@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { groupAlbumsByCountry, mediaCountLabel } from "../../src/features/events/domain/gallery.js";
 import { RepositoryError } from "../../src/features/events/services/event-repository.js";
-import { coverFile, createIntranetGalleryRepository, createMockGalleryRepository } from "../../src/features/events/services/gallery-repository.js";
+import { coverFile, createIntranetGalleryRepository, createMockGalleryRepository, previewFiles } from "../../src/features/events/services/gallery-repository.js";
 import { createGalleryService } from "../../src/features/events/services/gallery-service.js";
 import { createSupabaseRpc } from "../../src/features/events/services/supabase-rpc.js";
 
@@ -130,4 +130,16 @@ test("servicio y dominio: grupos Chile → Perú, teaser y etiquetas", async () 
   assert.equal(mediaCountLabel({ photos: 1, videos: 2 }), "1 foto · 2 videos");
   assert.equal(mediaCountLabel({ photos: 0, videos: 0 }), "Sin contenido aún");
   assert.deepEqual(groupAlbumsByCountry([]), []);
+});
+
+test("teaser: con un solo álbum igual arma 4 tarjetas (portada primero); con varios, una portada por álbum", async () => {
+  const one = createGalleryService({ repository: createMockGalleryRepository({ albums: [{ slug: "a", title: "A", description: "", country: "Chile", items: Array.from({ length: 6 }, (_, i) => ({ id: `f${i}`, type: /** @type {const} */ ("foto"), thumb: `t${i}`, src: `s${i}`, slot: "" })) }] }) });
+  assert.deepEqual((await one.getTeaser()).map((t) => [t.album.slug, t.item.id]), [["a", "f0"], ["a", "f1"], ["a", "f2"], ["a", "f3"]]);
+
+  const many = createGalleryService({ repository: createMockGalleryRepository() });
+  assert.deepEqual((await many.getTeaser()).map((t) => t.album.slug), ["jornada-radwin-santiago", "taller-certificacion-huechuraba", "encuentro-integradores-lima", "jornada-radwin-santiago"]);
+});
+
+test("previewFiles: la portada primero y luego las demás fotos (sin videos ni PDF)", () => {
+  assert.deepEqual(previewFiles(ALBUMS[0]).map((f) => f.ruta.split("/").pop()), ["Foto B.jpg", "Foto A.jpg"]);
 });

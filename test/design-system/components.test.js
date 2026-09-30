@@ -129,3 +129,19 @@ test("MapFrame: iframe con nombre accesible y carga diferida", () => {
   const out = String(MapFrame({ src: "https://www.google.com/maps/embed?pb=1&x=2", title: "Mapa: Casa Piedra" }));
   assert.equal(out.replace(/\s+/g, " "), '<div class="tw-map"> <iframe class="tw-map__frame" src="https://www.google.com/maps/embed?pb=1&amp;x=2" title="Mapa: Casa Piedra" loading="lazy" allowfullscreen></iframe> </div>');
 });
+
+test("MonthCalendar: selector de mes y días realizados en gris", () => {
+  const out = String(MonthCalendar({ year: 2026, month: 8, title: "Agosto 2026", markers: { 25: 9, 27: 1 }, past: [25, 27], nav: { prev: { label: "Ver julio", attrs: { "data-month": "2026-07" } }, next: null } }));
+  assert.match(out, /aria-label="Ver julio" data-month="2026-07"/);
+  assert.match(out, /aria-label="Sin mes siguiente" disabled/);
+  assert.equal((out.match(/tw-calendar__day--past/g) ?? []).length, 2);
+});
+
+test("Card muted marca lo que ya ocurrió", () => {
+  assert.equal(String(Card({ children: "x", layout: "row", muted: true })), '<div class="tw-card tw-card--row tw-card--muted">x</div>');
+});
+
+test("Badge truncate: una línea con el texto completo en title", () => {
+  const out = String(Badge({ label: "Lanzamiento de la línea de video", truncate: true, attrs: { title: "Lanzamiento de la línea de video" } }));
+  assert.equal(out, '<span class="tw-badge tw-badge--neutral tw-badge--truncate" title="Lanzamiento de la línea de video"><span class="tw-badge__text">Lanzamiento de la línea de video</span></span>');
+});

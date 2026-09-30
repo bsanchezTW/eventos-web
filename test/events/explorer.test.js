@@ -97,6 +97,9 @@ test("ExplorerResults: si el mes tiene una sola fecha, completa con lo realizado
   const result = buildExplorer(views, q({ categoria: "energia", mes: "2026-11" }), { now: NOW });
   const html = String(ExplorerResults({ explorer: result }));
   assert.equal(result.monthItems.length, 1);
-  assert.match(html, /Realizados recientemente/);
-  assert.equal((html.match(/tw-card--row/g) ?? []).length, 2);
+  assert.equal((html.match(/tw-card--row/g) ?? []).length, 2, "siempre dos tarjetas junto al calendario");
+  assert.equal((html.match(/tw-card--muted/g) ?? []).length, 1, "la realizada va en gris");
+  assert.match(html, /tw-stack--fill/, "ambas del mismo alto");
+  assert.deepEqual(result.calendar?.past, [], "noviembre aún no ocurre");
+  assert.ok(result.calendar?.prev && result.calendar?.next, "selector: meses vecinos con eventos");
 });

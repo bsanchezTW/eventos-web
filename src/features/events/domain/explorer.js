@@ -146,7 +146,8 @@ export function sortEvents(events, sort) {
  * @property {ExplorerQuery} query           query resuelta (mes efectivo, día validado)
  * @property {boolean} monthExplicit
  * @property {Array<{ key: string, label: string, count: number }>} months
- * @property {{ key: string, year: number, month: number, title: string, markers: Record<number, number>, today: number | null } | null} calendar
+ * @property {{ key: string, year: number, month: number, title: string, markers: Record<number, number>, past: number[], today: number | null, prev: { key: string, label: string } | null, next: { key: string, label: string } | null } | null} calendar
+ *   `past`: días cuyos eventos ya terminaron; `prev`/`next`: meses vecinos con eventos (selector del calendario)
  * @property {EventView[]} monthItems        eventos del mes (y del día, si hay día)
  * @property {EventView[]} seasonItems       todos los meses, con filtros
  * @property {number} total
@@ -183,10 +184,15 @@ export function buildExplorer(events, query, { now = new Date(), timeZone = "Ame
 
   /** @type {Record<number, number>} */
   const markers = {};
+  /** @type {Map<number, boolean>} día → ¿todos sus eventos terminaron? */
+  const finishedDays = new Map();
   for (const event of inMonth) {
     const d = Number(eventDayKey(event).slice(8));
     markers[d] = (markers[d] ?? 0) + 1;
+    finishedDays.set(d, (finishedDays.get(d) ?? true) && event.status === "finished");
   }
+  const monthIndex = month ? monthKeys.indexOf(month) : -1;
+  const neighbor = (/** @type {number} */ i) => (i >= 0 && i < monthKeys.length ? { key: monthKeys[i], label: monthKeyLabel(monthKeys[i]) } : null);
 
   const today = zonedParts(now, timeZone);
   const calendar = month
@@ -196,6 +202,9 @@ export function buildExplorer(events, query, { now = new Date(), timeZone = "Ame
         month: Number(month.slice(5)),
         title: monthKeyLabel(month),
         markers,
+        past: [...finishedDays].filter(([, done]) => done).map(([d]) => d).sort((a, b) => a - b),
+        prev: neighbor(monthIndex - 1),
+        next: neighbor(monthIndex + 1),
         today: today.year === Number(month.slice(0, 4)) && today.month === Number(month.slice(5)) ? today.day : null,
       }
     : null;
