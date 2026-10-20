@@ -194,3 +194,27 @@ test("gateway Supabase: rechazos y datos inválidos", async () => {
   const missing = await reply({ status: 500, body: { code: "P0002", details: null, hint: null, message: "RPE_EVENTO_NO_ENCONTRADO" } }).register("s", attendee, []);
   assert.deepEqual(missing, { ok: false, reason: "not_found" });
 });
+
+test("realizado con talleres: pide su detalle y muestra el programa; la sala no repite el recinto", async () => {
+  const pastWithWorkshops = { ...PAST_ROW, slug: "transworld-connect-72dt", nombre: "TRANSWORLD CONNECT", lugar: "Hotel Intercontinental", direccion: "Av. Vitacura 2885, Las Condes", tiene_subeventos: true };
+  const detail = {
+    ...pastWithWorkshops,
+    cupo: { limitado: false, disponibles: null },
+    subeventos: [{ codigo: "hajjbw", nombre: "Taller Fluke Networks", descripcion: null, dia: "2026-08-27", hora_inicio: "10:00", hora_fin: "11:00", sala: "Hotel Intercontinental", expositor: null, imagen_url: null, cupo: { limitado: false, disponibles: null }, agotado: false }],
+  };
+  /** @type {string[]} */
+  const asked = [];
+  /** @type {typeof fetch} */
+  const fetchImpl = async (url, init) => {
+    const name = String(url).split("/rpc/")[1];
+    if (name === "rpe_publico_calendario") return Response.json([pastWithWorkshops, PAST_ROW]);
+    asked.push(JSON.parse(String(init?.body)).p_slug);
+    return Response.json(detail);
+  };
+  const repo = createSupabaseEventRepository({ rpc: createSupabaseRpc({ url: "https://x.supabase.co", key: "k", fetchImpl }), clock: () => Date.parse("2026-09-30T12:00:00Z") });
+  const events = await repo.listEvents();
+  assert.deepEqual(asked, ["transworld-connect-72dt"], "solo el realizado que tiene talleres");
+  const workshop = events.find((e) => e.id === "transworld-connect-72dt--hajjbw");
+  assert.equal(workshop?.parentId, "transworld-connect-72dt");
+  assert.equal(workshop?.location.label, "Hotel Intercontinental, Las Condes");
+});

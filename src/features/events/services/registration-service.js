@@ -100,6 +100,8 @@ export function createRegistrationService({ eventService, gateway, onRegistered 
             const field = DB_FIELDS[outcome.field];
             throw new DomainError(outcome.message, { status: 422, code: "invalid", fields: field ? { [field]: outcome.message } : undefined });
           }
+          case "ya_inscrito":
+            throw new DomainError("Este correo ya se ha registrado al evento.", { status: 409, code: "already_registered" });
           case "registro_cerrado":
             throw new DomainError("Las inscripciones para este evento están cerradas.", { status: 410, code: "closed" });
           case "sin_cupo_evento":

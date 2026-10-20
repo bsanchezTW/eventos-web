@@ -2,7 +2,8 @@
  * Panel de inscripción (sticky en el detalle): formulario, estados cerrados y confirmación.
  *
  * Campos del formulario público anterior: nombre y apellido, correo, empresa, cargo y teléfono
- * con código de país; más los talleres del evento (selección múltiple, sin choques de horario).
+ * con código de país. Los talleres se eligen en "Talleres y actividades" (WorkshopPicker): sus
+ * casillas pertenecen a este formulario vía el atributo `form` aunque estén fuera de él.
  */
 import {
   Alert,
@@ -15,6 +16,7 @@ import {
   Cluster,
   Field,
   Heading,
+  IconCircle,
   Input,
   InputGroup,
   Select,
@@ -29,6 +31,9 @@ import { API } from "../domain/links.js";
 import { defaultPhoneCountry, getPhoneCountry, phoneCountryOptions } from "../domain/registration.js";
 
 /** @typedef {import("../domain/event.js").EventView} EventView */
+
+/** id del formulario de inscripción (las casillas de talleres lo referencian con `form`). */
+export const REGISTRATION_FORM_ID = "registro-form";
 
 /** @param {EventView} event */
 function closedState(event) {
@@ -50,14 +55,18 @@ function workshopMeta(workshop) {
   return [formatShortDate(workshop), formatTimeRange(workshop), workshop.location.venue, speaker].filter(Boolean).join(" · ");
 }
 
-/** @param {{ workshops: EventView[] }} props */
-function WorkshopPicker({ workshops }) {
+/**
+ * Talleres del evento para elegir al inscribirse (va en "Talleres y actividades", no en el panel).
+ * Los realizados o sin cupo se ven, pero no se pueden marcar.
+ * @param {{ workshops: EventView[] }} props
+ */
+export function WorkshopPicker({ workshops }) {
   return ChoiceGroup({
     id: "registro-talleres",
-    legend: "Talleres (opcional)",
-    hint: "Elige todos los que quieras; no puedes tomar dos a la misma hora.",
+    legend: "Elige tus talleres (opcional)",
+    hint: "Se inscriben junto con tu registro. Cada taller tiene cupos propios y no puedes tomar dos a la misma hora.",
     children: workshops.map((workshop) => {
-      const seats = seatAvailability(workshop);
+      const seats = workshop.status === "finished" ? { label: "Realizado", tone: /** @type {const} */ ("default") } : seatAvailability(workshop);
       return ChoiceCard({
         name: "talleres",
         value: workshopCode(workshop),
@@ -65,7 +74,7 @@ function WorkshopPicker({ workshops }) {
         meta: workshopMeta(workshop),
         aside: Availability({ label: seats.label, tone: seats.tone }),
         disabled: !isRegistrationOpen(workshop),
-        attrs: { "data-title": workshop.title, "data-starts": workshop.startsAt, "data-ends": workshop.endsAt },
+        attrs: { form: REGISTRATION_FORM_ID, "data-title": workshop.title, "data-starts": workshop.startsAt, "data-ends": workshop.endsAt },
       });
     }),
   });
@@ -95,7 +104,7 @@ export function RegistrationPanel({ event, workshops = [], parent = null, contac
     });
   }
 
-  const openWorkshops = workshops.filter((w) => w.status !== "finished" && w.status !== "cancelled");
+  const selectable = workshops.some((w) => isRegistrationOpen(w));
   const phoneCountry = defaultPhoneCountry(event.location.country);
   const field = (/** @type {string} */ name, /** @type {string} */ label, /** @type {Record<string, any>} */ props) =>
     Field({ id: `registro-${name}`, label, control: (a11y) => Input({ id: `registro-${name}`, name, ...props, ...a11y }) });
@@ -109,7 +118,7 @@ export function RegistrationPanel({ event, workshops = [], parent = null, contac
         ${Text({ variant: "meta", className: "tw-mt-1-5 tw-mb-5", children: `${seats.label} · ${priceLabel}` })}
         ${parent ? Text({ variant: "meta", className: "tw-mb-4", children: `Quedarás inscrito en ${parent.title} con este taller.` }) : ""}
         <noscript>${Alert({ tone: "info", message: html`Activa JavaScript para completar la inscripción o escríbenos a <a href="${contactHref}">eventos@transworld.cl</a>.` })}</noscript>
-        <form class="tw-form-grid" method="post" action="${API.registrations(event.id)}" novalidate data-registration-form>
+        <form class="tw-form-grid" id="${REGISTRATION_FORM_ID}" method="post" action="${API.registrations(event.id)}" novalidate data-registration-form>
           ${field("nombre", "Nombre y apellido", { autocomplete: "name", placeholder: "María Pérez", required: true })}
           ${field("email", "Correo electrónico", { type: "email", autocomplete: "email", placeholder: "maria@empresa.cl", required: true })}
           <div class="tw-form-grid tw-form-grid--2">
@@ -125,7 +134,12 @@ export function RegistrationPanel({ event, workshops = [], parent = null, contac
                 ${Input({ id: "registro-telefono", name: "telefono", type: "tel", inputmode: "tel", autocomplete: "tel-national", placeholder: getPhoneCountry(phoneCountry).example, required: true, ...a11y })}`,
               }),
           })}
-          ${openWorkshops.length ? WorkshopPicker({ workshops: openWorkshops }) : ""}
+          ${selectable
+            ? Text({
+                variant: "meta",
+                children: html`<span data-workshops-summary>Ningún taller elegido (opcional)</span> · <a href="#talleres">Elegir talleres</a>`,
+              })
+            : ""}
           ${Checkbox({ id: "registro-acepta", name: "acepta", checked: true, attrs: { "aria-describedby": "registro-acepta-error" }, label: "Acepto recibir la confirmación y recordatorios de este evento por correo." })}
           <p class="tw-field__error" id="registro-acepta-error" data-field-error="registro-acepta" hidden></p>
           <div id="registro-alert" data-form-alert></div>
@@ -135,6 +149,24 @@ export function RegistrationPanel({ event, workshops = [], parent = null, contac
       </div>
       <div data-registration-step="success" hidden></div>`,
   });
+}
+
+/**
+ * El correo ya está inscrito en el evento: no se reinscribe; se ofrece modificar la inscripción
+ * con un enlace por correo.
+ * @param {{ email: string }} props
+ */
+export function AlreadyRegistered({ email }) {
+  return html`<div class="tw-stack tw-gap-4 tw-text-center" role="status">
+    <div class="tw-cluster tw-cluster--center">${IconCircle({ icon: "mail", size: "lg" })}</div>
+    ${Heading({ level: 2, variant: "h3", id: "registro-existente", children: "Este correo ya se ha registrado al evento" })}
+    ${Text({ variant: "body", children: html`<strong>${email}</strong> ya tiene su inscripción. Si quieres modificarla, haz clic en el botón y te enviaremos un correo con un enlace para hacerlo.` })}
+    <div data-edit-link-status></div>
+    <div class="tw-stack tw-gap-2">
+      ${Button({ label: "Enviarme el enlace", variant: "accent", size: "lg", block: true, attrs: { "data-action": "request-edit-link" } })}
+      ${Button({ label: "Usar otro correo", variant: "ghost", block: true, className: "tw-btn--medium", attrs: { "data-action": "back-to-form" } })}
+    </div>
+  </div>`;
 }
 
 /** @typedef {import("../services/registration-service.js").RegistrationResult} RegistrationResult */

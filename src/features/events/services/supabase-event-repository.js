@@ -150,7 +150,8 @@ export function toRawEvents(row, { featured = false } = {}) {
       startsAt: zonedIso(s.dia, s.hora_inicio, timezone),
       endsAt: zonedIso(s.dia, s.hora_fin, timezone),
       timezone,
-      location: { ...location, venue: room || location.venue, label: room && label ? `${room} · ${label}` : label },
+      // La sala se antepone al lugar, salvo que sea el mismo recinto ("Hotel X · Hotel X").
+      location: { ...location, venue: room || location.venue, label: room && label && !label.startsWith(room) ? `${room} · ${label}` : label },
       price: 0,
       currency,
       capacity: left,
@@ -199,10 +200,11 @@ export function createSupabaseEventRepository({ rpc, cacheTtlMs = 30_000, pastDa
     const rows = await rpc("rpe_publico_calendario", { p_desde: from, p_hasta: day(futureDays) });
     const list = Array.isArray(rows) ? rows : [];
 
-    // Detalle (cupos y talleres) solo de los vigentes; si uno falla, queda con los datos del calendario.
+    // Detalle (cupos y talleres) de los vigentes y de los realizados con talleres (su programa);
+    // si uno falla, queda con los datos del calendario.
     const detailed = await Promise.all(
       list.map((/** @type {any} */ row) =>
-        row.estado === "finalizado"
+        row.estado === "finalizado" && !row.tiene_subeventos
           ? row
           : rpc("rpe_publico_evento", { p_slug: row.slug }).catch((/** @type {Error} */ error) => {
               logger.warn(`[eventos] Sin detalle de ${row.slug}: ${error.message}`);

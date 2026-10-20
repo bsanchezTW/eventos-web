@@ -15,7 +15,7 @@ import { RpcError } from "./supabase-rpc.js";
 
 /**
  * @typedef {{ ok: true, result: "inscrito" | "actualizado" | "sin_cambios", added: string[], alreadyIn: string[], delivery: "programado" | "limitado" }
- *   | { ok: false, reason: "registro_cerrado" | "sin_cupo_evento" | "subeventos_rechazados", rejected: Array<{ code: string, reason: WorkshopRejection }> }
+ *   | { ok: false, reason: "registro_cerrado" | "ya_inscrito" | "sin_cupo_evento" | "subeventos_rechazados", rejected: Array<{ code: string, reason: WorkshopRejection }> }
  *   | { ok: false, reason: "not_found" }
  *   | { ok: false, reason: "invalid", field: string, message: string }} GatewayResult
  */
@@ -122,6 +122,8 @@ export function createMemoryRegistrationGateway({ eventService }) {
       if (!current && event.seatsLeft !== null && count(eventId) >= event.seatsLeft) return { ok: false, reason: "sin_cupo_evento", rejected: [] };
       if (rejected.length) return { ok: false, reason: "subeventos_rechazados", rejected };
 
+      // Igual que la base: un correo ya inscrito no se reinscribe (se ofrece modificar por enlace).
+      if (current) return { ok: false, reason: "ya_inscrito", rejected: [] };
       const alreadyIn = workshopCodes.filter((code) => current?.has(code));
       const added = workshopCodes.filter((code) => !current?.has(code));
       const codes = current ?? new Set();

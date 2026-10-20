@@ -4,9 +4,10 @@
  */
 import { Banner, Button, Card, Cluster, FactList, Heading, MapFrame, Section, Tag, Text, Timeline, html } from "../../../design-system/index.js";
 import { EventBadges, EventCard } from "../components/event-card.js";
-import { RegistrationPanel } from "../components/registration.js";
+import { RegistrationPanel, WorkshopPicker } from "../components/registration.js";
 import { mailto } from "../data/landing-content.js";
 import { eventFacts, formatLongDate } from "../domain/format.js";
+import { isRegistrationOpen } from "../domain/event.js";
 import { eventHref } from "../domain/links.js";
 import { mapsSearchHref } from "../domain/maps.js";
 import { renderPage } from "./shell.js";
@@ -36,12 +37,14 @@ function locationBody(event) {
  */
 export function renderEventDetailPage({ detail, categories, canonical }) {
   const { event, parent, children } = detail;
+  const selectWorkshops = isRegistrationOpen(event) && children.some(isRegistrationOpen);
   const location = locationBody(event);
 
-  const panel = (/** @type {string} */ title, /** @type {import("../../../design-system/utils/html.js").Renderable} */ body, /** @type {string | undefined} */ intro = undefined) =>
+  const panel = (/** @type {string} */ title, /** @type {import("../../../design-system/utils/html.js").Renderable} */ body, /** @type {string | undefined} */ intro = undefined, /** @type {string | undefined} */ id = undefined) =>
     Card({
       as: "section",
       roomy: true,
+      attrs: { id },
       children: html`${Heading({ level: 2, variant: "panel", children: title, className: intro ? "tw-mb-2" : "tw-mb-4" })}
         ${intro ? Text({ variant: "meta", className: "tw-mb-4", children: intro }) : ""}
         ${body}`,
@@ -63,11 +66,15 @@ export function renderEventDetailPage({ detail, categories, canonical }) {
           <div class="tw-stack tw-gap-4-5">
             ${Card({ as: "section", roomy: true, attrs: { "aria-label": "Datos del evento" }, children: FactList({ items: eventFacts(event) }) })}
             ${children.length
-              ? panel(
-                  "Talleres y actividades",
-                  html`<ul class="tw-stack tw-gap-3" role="list">${children.map((child) => EventCard({ event: child, as: "li", showFeatured: false }))}</ul>`,
-                  "Elígelos en el formulario al inscribirte: cada taller tiene cupos propios y no puedes tomar dos a la misma hora.",
-                )
+              ? // Con inscripción abierta, esta es la única lista de talleres: se eligen aquí mismo.
+                selectWorkshops
+                ? panel("Talleres y actividades", WorkshopPicker({ workshops: children }), undefined, "talleres")
+                : panel(
+                    "Talleres y actividades",
+                    html`<ul class="tw-stack tw-gap-3" role="list">${children.map((child) => EventCard({ event: child, as: "li", showFeatured: false }))}</ul>`,
+                    event.status === "finished" ? "Talleres que se realizaron dentro de este evento." : undefined,
+                    "talleres",
+                  )
               : ""}
             ${event.program.length
               ? panel(

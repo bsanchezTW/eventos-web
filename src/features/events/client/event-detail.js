@@ -1,9 +1,11 @@
 /**
  * Detalle de evento: envío de inscripción con validación compartida, formato del teléfono al
  * escribir y datos recordados para inscribirse en otros eventos de la agenda.
+ * Los talleres se marcan en "Talleres y actividades" (fuera del panel): sus casillas pertenecen
+ * al formulario por el atributo `form`, y sus errores se muestran allí.
  */
 import { toHtml } from "../../../design-system/index.js";
-import { RegistrationSuccess } from "../components/registration.js";
+import { AlreadyRegistered, RegistrationSuccess } from "../components/registration.js";
 import { API } from "../domain/links.js";
 import { formatLocalPhoneInput, getPhoneCountry, validateRegistration } from "../domain/registration.js";
 import { NETWORK_MESSAGE, NetworkError, postJson, renderAlert, setBusy, setFieldErrors } from "./forms.js";
@@ -25,7 +27,21 @@ function initRegistration() {
   const input = (/** @type {string} */ name) => /** @type {HTMLInputElement | HTMLSelectElement} */ (form.elements.namedItem(name));
   const phone = /** @type {HTMLInputElement} */ (input("telefono"));
   const country = /** @type {HTMLSelectElement} */ (input("telefono_pais"));
-  const workshopInputs = () => [.../** @type {NodeListOf<HTMLInputElement>} */ (form.querySelectorAll('input[name="talleres"]'))];
+  // Casillas asociadas al formulario (también las que están fuera de él, con el atributo form).
+  const workshopInputs = () => /** @type {HTMLInputElement[]} */ ([...form.elements].filter((el) => el instanceof HTMLInputElement && el.name === "talleres"));
+  // Contenedor con el formulario y la lista de talleres: ahí viven sus mensajes de error.
+  const root = /** @type {HTMLElement} */ (panel.closest(".tw-split") ?? form);
+  const summary = /** @type {HTMLElement | null} */ (panel.querySelector("[data-workshops-summary]"));
+
+  /** Resumen en el panel de lo marcado en la lista de talleres. */
+  const updateSummary = () => {
+    if (!summary) return;
+    const chosen = workshopInputs().filter((i) => i.checked).map((i) => i.dataset.title ?? i.value);
+    summary.textContent = chosen.length ? `${chosen.length === 1 ? "1 taller" : `${chosen.length} talleres`}: ${chosen.join(", ")}` : "Ningún taller elegido (opcional)";
+  };
+  root.addEventListener("change", (event) => {
+    if (/** @type {HTMLInputElement} */ (event.target).name === "talleres") updateSummary();
+  });
 
   // Teléfono: agrupa los dígitos según el país y muestra su formato de ejemplo.
   phone.addEventListener("input", () => {
@@ -37,12 +53,12 @@ function initRegistration() {
   });
 
   // Al corregir un campo marcado, su error desaparece sin esperar al próximo envío.
-  form.addEventListener("input", (event) => {
+  root.addEventListener("input", (event) => {
     const control = /** @type {Element} */ (event.target).closest('[aria-invalid="true"]');
     if (!control) return;
     control.removeAttribute("aria-invalid");
     control.removeAttribute("aria-describedby");
-    const message = /** @type {HTMLElement | null} */ (form.querySelector(`[data-field-error="${CSS.escape(control.id)}"]`));
+    const message = /** @type {HTMLElement | null} */ (root.querySelector(`[data-field-error="${CSS.escape(control.id)}"]`));
     if (message) message.hidden = true;
   });
 
@@ -67,7 +83,7 @@ function initRegistration() {
 
   /** @param {Record<string, string | undefined>} errors */
   const showErrors = (errors) => {
-    const first = setFieldErrors(form, errors, "registro");
+    const first = setFieldErrors(root, errors, "registro");
     first?.focus();
     return first;
   };
@@ -85,12 +101,11 @@ function initRegistration() {
       if (status === 201) {
         const { value } = validateRegistration(data);
         rememberAttendee({ nombre: value.nombre, email: value.email, empresa: value.empresa, cargo: value.cargo, telefono_pais: value.telefono_pais, telefono: value.telefono });
-        successStep.innerHTML = toHtml(RegistrationSuccess(body.data));
-        formStep.hidden = true;
-        successStep.hidden = false;
-        const heading = /** @type {HTMLElement | null} */ (successStep.querySelector("#registro-confirmado"));
-        heading?.setAttribute("tabindex", "-1");
-        heading?.focus();
+        showStep(successStep, RegistrationSuccess(body.data), "#registro-confirmado");
+        return;
+      }
+      if (body.code === "already_registered") {
+        showStep(successStep, AlreadyRegistered({ email: input("email").value.trim().toLowerCase() }), "#registro-existente");
         return;
       }
       const fields = body.fields ?? {};
@@ -106,14 +121,40 @@ function initRegistration() {
     }
   });
 
-  panel.addEventListener("click", (event) => {
-    if (!/** @type {Element} */ (event.target).closest('[data-action="reset-registration"]')) return;
-    for (const name of ["nombre", "email", "cargo", "telefono"]) input(name).value = "";
-    for (const box of workshopInputs()) box.checked = false;
+  /** Reemplaza el formulario por un paso (confirmación o aviso) y lleva el foco a su título. */
+  function showStep(/** @type {HTMLElement} */ step, /** @type {import("../../../design-system/utils/html.js").Renderable} */ content, /** @type {string} */ headingSelector) {
+    step.innerHTML = toHtml(content);
+    formStep.hidden = true;
+    step.hidden = false;
+    const heading = /** @type {HTMLElement | null} */ (step.querySelector(headingSelector));
+    heading?.setAttribute("tabindex", "-1");
+    heading?.focus();
+  }
+
+  function backToForm() {
     successStep.hidden = true;
     successStep.innerHTML = "";
     formStep.hidden = false;
-    input("nombre").focus();
+  }
+
+  panel.addEventListener("click", (event) => {
+    const action = /** @type {Element} */ (event.target).closest("[data-action]")?.getAttribute("data-action");
+    if (action === "reset-registration") {
+      for (const name of ["nombre", "email", "cargo", "telefono"]) input(name).value = "";
+      for (const box of workshopInputs()) box.checked = false;
+      updateSummary();
+      backToForm();
+      input("nombre").focus();
+    } else if (action === "back-to-form") {
+      backToForm();
+      input("email").focus();
+    } else if (action === "request-edit-link") {
+      // Pendiente: el envío del enlace para modificar la inscripción se implementa después.
+      renderAlert(panel.querySelector("[data-edit-link-status]"), {
+        tone: "info",
+        message: "Estamos habilitando esta opción. Muy pronto podrás pedir aquí el enlace para modificar tu inscripción.",
+      });
+    }
   });
 }
 

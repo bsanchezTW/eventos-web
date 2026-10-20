@@ -38,7 +38,7 @@ export class NetworkError extends Error {
  * mensaje [data-field-error="<prefix>-<name>"] con id <prefix>-<name>-error.
  * Con `inline: false` (patrón del template) el mensaje no se escribe junto al campo: el control
  * queda marcado y describe su error vía `describedBy` (p. ej. la alerta única del formulario).
- * @param {HTMLFormElement} form
+ * @param {ParentNode} form  formulario o contenedor (p. ej. si hay controles del formulario fuera de él)
  * @param {Record<string, string | undefined>} errors
  * @param {string} prefix
  * @param {{ inline?: boolean, describedBy?: string }} [options]
