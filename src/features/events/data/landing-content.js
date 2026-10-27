@@ -35,6 +35,7 @@ export const LANDING_CONTENT = {
     eyebrow: "Galería",
     title: "Cómo se viven nuestras jornadas",
     action: "Ver fotos y videos",
+    reelLabel: "Fotos de nuestros eventos",
   },
   galleryPage: {
     title: "Galería · Transworld",

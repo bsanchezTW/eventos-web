@@ -1,5 +1,6 @@
 /**
- * Galería: álbumes publicados desde la intranet, agrupados por país. Cada álbum abre su página.
+ * Galería: álbumes publicados desde la intranet, agrupados por país y con filtro por país (diseño
+ * de la galería de la intranet). Cada álbum abre su página.
  */
 import { Eyebrow, Heading, Section, Text, html } from "../../../design-system/index.js";
 import { AlbumGroups } from "../components/gallery.js";
@@ -25,5 +26,5 @@ export function renderGalleryPage({ gallery, categories, canonical }) {
       ${AlbumGroups({ groups: gallery.groups })}`,
   })}`;
 
-  return renderPage({ title: page.title, description: page.text, canonical, categories, activeNav: "galeria", main });
+  return renderPage({ title: page.title, description: page.text, canonical, categories, activeNav: "galeria", main, scripts: ["/features/events/client/gallery-list.js"] });
 }

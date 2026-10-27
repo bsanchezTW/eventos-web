@@ -1,12 +1,12 @@
 /**
- * Galería desde la intranet: álbumes marcados para la web, URLs firmadas y miniaturas.
+ * Galería desde la intranet: álbumes marcados para la web, URLs firmadas y fotos reducidas.
  * Usa un fetch falso con la forma de PostgREST y de la API de Storage de Supabase.
  */
 import assert from "node:assert/strict";
 import test from "node:test";
 import { groupAlbumsByCountry, mediaCountLabel } from "../../src/features/events/domain/gallery.js";
 import { RepositoryError } from "../../src/features/events/services/event-repository.js";
-import { coverFile, createIntranetGalleryRepository, createMockGalleryRepository, previewFiles } from "../../src/features/events/services/gallery-repository.js";
+import { IMAGE_SIZES, coverFile, createIntranetGalleryRepository, createMockGalleryRepository, sample } from "../../src/features/events/services/gallery-repository.js";
 import { createGalleryService } from "../../src/features/events/services/gallery-service.js";
 import { createSupabaseRpc } from "../../src/features/events/services/supabase-rpc.js";
 
@@ -46,13 +46,13 @@ function fakeIntranet({ transforms = true } = {}) {
     const single = /\/storage\/v1\/object\/sign\/([^/]+)\/(.+)$/.exec(url);
     if (single) {
       if (!transforms) return Response.json({ statusCode: "403", error: "Image transformation is not enabled" }, { status: 400 });
-      return Response.json({ signedURL: `/render/image/sign/${single[1]}/${single[2]}?token=thumb&width=${body.transform.width}` });
+      return Response.json({ signedURL: `/render/image/sign/${single[1]}/${single[2]}?token=sized&width=${body.transform.width}` });
     }
     return new Response("", { status: 404 });
   };
   const rpc = createSupabaseRpc({ url: URL_BASE, key: "sb_publishable_intranet", fetchImpl });
-  const repo = () => createIntranetGalleryRepository({ url: URL_BASE, key: "sb_publishable_intranet", rpc, fetchImpl, logger: { warn() {} } });
-  return { calls, repo };
+  const repo = () => createIntranetGalleryRepository({ url: URL_BASE, key: "sb_publishable_intranet", rpc, fetchImpl, logger: { warn() {} }, random: () => 0 });
+  return { calls, repo, fetchImpl };
 }
 
 test("coverFile: la portada de la intranet (ruta /content codificada) o la primera foto", () => {
@@ -61,7 +61,7 @@ test("coverFile: la portada de la intranet (ruta /content codificada) o la prime
   assert.equal(coverFile(ALBUMS[1]), null);
 });
 
-test("intranet: álbumes con portada en miniatura firmada, sin PDF, país legible", async () => {
+test("intranet: álbumes con la portada en miniatura reducida (foto completa), sin PDF, país legible", async () => {
   const { calls, repo } = fakeIntranet();
   const albums = await repo().listAlbums();
   assert.deepEqual(
@@ -71,33 +71,37 @@ test("intranet: álbumes con portada en miniatura firmada, sin PDF, país legibl
       ["integradores-lima", "Perú", 0, 0],
     ],
   );
-  assert.equal(albums[0].cover?.thumb, `${URL_BASE}/storage/v1/render/image/sign/intranet-content/eventos/transworld-connect-2026/Foto%20B.jpg?token=thumb&width=640`);
+  assert.equal(albums[0].cover?.thumb, `${URL_BASE}/storage/v1/render/image/sign/intranet-content/eventos/transworld-connect-2026/Foto%20B.jpg?token=sized&width=640`);
   assert.equal(albums[1].cover, null);
+  const transforms = calls.filter((c) => c.body.transform).map((c) => c.body.transform);
+  assert.deepEqual(transforms, [IMAGE_SIZES.thumb], "la lista solo firma las portadas");
+  assert.equal(IMAGE_SIZES.thumb.resize, "contain", "foto completa: ni recortada ni una franja");
+  assert.ok(IMAGE_SIZES.thumb.height, "con alto y ancho, Supabase no inventa un alto de 2000px");
   assert.ok(calls.every((c) => c.apikey === "sb_publishable_intranet"), "siempre la clave publicable");
 });
 
-test("intranet: álbum con miniaturas y originales firmados por bucket; caché", async () => {
+test("intranet: el álbum se firma por tandas, con miniatura y versión de pantalla reducidas; caché", async () => {
   const { calls, repo } = fakeIntranet();
   const gallery = repo();
-  const found = await gallery.getAlbum("transworld-connect-2026");
-  assert.ok(found);
+  const first = await gallery.getAlbum("transworld-connect-2026", { offset: 0, limit: 2 });
+  assert.ok(first);
+  assert.equal(first.total, 3);
   assert.deepEqual(
-    found.items.map((i) => [i.type, i.thumb?.includes("render/image") ?? null, i.src?.includes("token=full")]),
+    first.items.map((i) => [i.type, i.thumb?.includes("width=640"), i.src?.includes("width=1600")]),
     [
       ["foto", true, true],
       ["foto", true, true],
-      ["video", null, true],
     ],
   );
-  const batches = calls.filter((c) => /object\/sign\/[^/]+$/.test(c.url)).map((c) => [c.url.split("/").pop(), c.body.paths.length]);
-  assert.deepEqual(batches.slice(-2), [
-    ["intranet-content", 2],
-    ["intranet-content-pe", 1],
-  ]);
+  const signed = (/** @type {string} */ name) => calls.filter((c) => c.url.includes(encodeURIComponent(name)) || c.body.paths?.some((/** @type {string} */ p) => p.includes(name))).length;
+  assert.equal(signed("resumen.mp4"), 0, "el video de la tanda siguiente no se firma todavía");
+
+  const second = await gallery.getAlbum("transworld-connect-2026", { offset: 2, limit: 2 });
+  assert.deepEqual(second?.items.map((i) => [i.type, i.thumb, i.src?.includes("token=full")]), [["video", null, true]], "el video va original (sin transformación)");
 
   const before = calls.length;
-  await gallery.getAlbum("transworld-connect-2026");
-  assert.equal(calls.length, before, "dentro del TTL no vuelve a firmar");
+  await gallery.getAlbum("transworld-connect-2026", { offset: 0, limit: 2 });
+  assert.equal(calls.length, before, "lo ya firmado no se vuelve a firmar");
   assert.equal(await gallery.getAlbum("no-existe"), null);
 });
 
@@ -108,15 +112,24 @@ test("intranet: sin transformación de imagen, la miniatura es el original", asy
   assert.ok(photos.length === 2 && photos.every((i) => i.thumb === i.src && i.src?.includes("token=full")));
 });
 
-test("intranet sin la función galeria_web (SQL sin aplicar): error de repositorio y landing sin teaser", async () => {
+test("intranet: rollo de la portada con fotos al azar de todos los álbumes, aún más chicas", async () => {
+  const { calls, repo } = fakeIntranet();
+  const photos = await repo().samplePhotos(5);
+  assert.equal(photos.length, 2, "no hay más fotos que las del álbum (sin videos ni PDF)");
+  assert.ok(photos.every((p) => p.album.slug === "transworld-connect-2026" && p.album.title === "Transworld Connect 2026"));
+  assert.ok(photos.every((p) => p.item.thumb?.includes(`width=${IMAGE_SIZES.reel.width}`)));
+  assert.ok(calls.filter((c) => c.body.transform).every((c) => c.body.transform !== IMAGE_SIZES.view), "el rollo no pide la versión de pantalla");
+});
+
+test("intranet sin la función galeria_web (SQL sin aplicar): error de repositorio y landing sin rollo", async () => {
   const fetchImpl = /** @type {typeof fetch} */ (async () => Response.json({ code: "PGRST202", message: "Could not find the function public.galeria_web" }, { status: 404 }));
   const rpc = createSupabaseRpc({ url: URL_BASE, key: "k", fetchImpl });
   const repo = createIntranetGalleryRepository({ url: URL_BASE, key: "k", rpc, fetchImpl });
   await assert.rejects(repo.listAlbums(), RepositoryError);
-  assert.deepEqual(await createGalleryService({ repository: repo, logger: { warn() {} } }).getTeaser(), []);
+  assert.deepEqual(await createGalleryService({ repository: repo, logger: { warn() {} } }).getReel(), []);
 });
 
-test("servicio y dominio: grupos Chile → Perú, teaser y etiquetas", async () => {
+test("servicio y dominio: grupos Chile → Perú, álbum por tandas, rollo y etiquetas", async () => {
   const service = createGalleryService({ repository: createMockGalleryRepository() });
   const { groups } = await service.getGallery();
   assert.deepEqual(
@@ -126,20 +139,72 @@ test("servicio y dominio: grupos Chile → Perú, teaser y etiquetas", async () 
       ["Perú", 1],
     ],
   );
-  assert.equal((await service.getTeaser(2)).length, 2);
+  const page = await service.getAlbum("jornada-radwin-santiago", { offset: 2, limit: 3 });
+  assert.deepEqual([page?.items.length, page?.total], [3, 7]);
+  const reel = await service.getReel(4);
+  assert.equal(reel.length, 4);
+  assert.ok(reel.every((p) => p.item.type === "foto" && p.album.title));
   assert.equal(mediaCountLabel({ photos: 1, videos: 2 }), "1 foto · 2 videos");
   assert.equal(mediaCountLabel({ photos: 0, videos: 0 }), "Sin contenido aún");
   assert.deepEqual(groupAlbumsByCountry([]), []);
 });
 
-test("teaser: con un solo álbum igual arma 4 tarjetas (portada primero); con varios, una portada por álbum", async () => {
-  const one = createGalleryService({ repository: createMockGalleryRepository({ albums: [{ slug: "a", title: "A", description: "", country: "Chile", items: Array.from({ length: 6 }, (_, i) => ({ id: `f${i}`, type: /** @type {const} */ ("foto"), thumb: `t${i}`, src: `s${i}`, slot: "" })) }] }) });
-  assert.deepEqual((await one.getTeaser()).map((t) => [t.album.slug, t.item.id]), [["a", "f0"], ["a", "f1"], ["a", "f2"], ["a", "f3"]]);
-
-  const many = createGalleryService({ repository: createMockGalleryRepository() });
-  assert.deepEqual((await many.getTeaser()).map((t) => t.album.slug), ["jornada-radwin-santiago", "taller-certificacion-huechuraba", "encuentro-integradores-lima", "jornada-radwin-santiago"]);
+test("sample: elementos al azar sin repetir", () => {
+  assert.deepEqual(sample([1, 2, 3, 4], 2, () => 0), [1, 2]);
+  assert.deepEqual(sample([1, 2, 3], 9, () => 0.99).sort(), [1, 2, 3]);
+  assert.equal(new Set(sample([...Array(50).keys()], 20)).size, 20);
 });
 
-test("previewFiles: la portada primero y luego las demás fotos (sin videos ni PDF)", () => {
-  assert.deepEqual(previewFiles(ALBUMS[0]).map((f) => f.ruta.split("/").pop()), ["Foto B.jpg", "Foto A.jpg"]);
+test("intranet: al vencer la muestra del rollo, la portada recibe la anterior mientras se firma la nueva", async () => {
+  const { fetchImpl: inner } = fakeIntranet();
+  let now = 0;
+  /** @type {Promise<void> | null} */
+  let hold = null;
+  /** @type {typeof fetch} */
+  const fetchImpl = async (input, init) => {
+    if (hold && String(input).includes("/storage/")) await hold;
+    return inner(input, init);
+  };
+  const rpc = createSupabaseRpc({ url: URL_BASE, key: "k", fetchImpl });
+  const gallery = createIntranetGalleryRepository({ url: URL_BASE, key: "k", rpc, fetchImpl, clock: () => now, cacheTtlMs: 1000, logger: { warn() {} } });
+
+  const first = await gallery.samplePhotos(2);
+  now = 5000;
+  let release = () => {};
+  hold = new Promise((resolve) => (release = resolve));
+  assert.deepEqual(await gallery.samplePhotos(2), first, "no espera las firmas nuevas");
+  release();
+});
+
+test("intranet: fecha del álbum y slider con la portada primero, en tamaño de pantalla", async () => {
+  const { calls, repo } = fakeIntranet();
+  const gallery = repo();
+  const [connect] = await gallery.listAlbums();
+  assert.equal(connect.date, "2026-09-07T19:24:55");
+  const slides = await gallery.albumSlides("transworld-connect-2026", 12);
+  assert.equal(slides.length, 2, "no hay más fotos que las del álbum (sin videos)");
+  assert.match(slides[0].id, /Foto B\.jpg$/, "la portada abre el slider");
+  assert.ok(slides.every((s) => s.src?.includes(`width=${IMAGE_SIZES.view.width}`) && s.thumb === null), "solo la versión de pantalla");
+  const before = calls.length;
+  await gallery.albumSlides("transworld-connect-2026", 12);
+  assert.equal(calls.length, before, "el slider queda en caché");
+  assert.deepEqual(await gallery.albumSlides("no-existe", 12), []);
+});
+
+test("formatAlbumDate: la fecha de la intranet (UTC) en Chile", async () => {
+  const { formatAlbumDate } = await import("../../src/features/events/domain/gallery.js");
+  assert.equal(formatAlbumDate("2026-09-07T19:24:55"), "7 de septiembre de 2026");
+  assert.equal(formatAlbumDate("2026-09-08T02:00:00Z"), "7 de septiembre de 2026", "de noche en Chile sigue siendo el 7");
+  assert.equal(formatAlbumDate(null), "");
+  assert.equal(formatAlbumDate("no es fecha"), "");
+});
+
+test("servicio: página del álbum con su slider; si el slider falla, queda la portada", async () => {
+  const mock = createMockGalleryRepository();
+  const ok = await createGalleryService({ repository: mock }).getAlbumPage("jornada-radwin-santiago");
+  assert.ok(ok && ok.slides.length === 6 && ok.slides[0].id === ok.album.cover?.id);
+  const failing = { ...mock, albumSlides: async () => Promise.reject(new Error("sin red")) };
+  const fallback = await createGalleryService({ repository: failing, logger: { warn() {} } }).getAlbumPage("jornada-radwin-santiago");
+  assert.deepEqual(fallback?.slides.map((s) => s.id), [fallback?.album.cover?.id]);
+  assert.equal(await createGalleryService({ repository: mock }).getAlbumPage("no-existe"), null);
 });

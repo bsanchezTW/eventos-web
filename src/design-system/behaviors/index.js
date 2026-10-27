@@ -185,6 +185,255 @@ export function initCarousels(root = document) {
   });
 }
 
+/* ── Rollo fotográfico ───────────────────────────────────────────── */
+/**
+ * La foto activa queda siempre en la misma posición (`slot`) del centro: al avanzar, la tira se
+ * desliza un cuadro y el primero pasa al final (y al revés al retroceder), así el rollo no tiene fin.
+ * @param {HTMLElement} el
+ */
+function createFilmStrip(el) {
+  const track = /** @type {HTMLElement | null} */ (el.querySelector("[data-tw-filmstrip-track]"));
+  const title = el.querySelector("[data-tw-filmstrip-title]");
+  if (!track || track.children.length < 2) return;
+
+  const frames = () => /** @type {HTMLElement[]} */ ([...track.children]);
+  const slot = Math.min(Math.floor(track.children.length / 2), 6);
+  const interval = Number(el.dataset.interval) || 3200;
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const slideMs = reducedMotion ? 0 : 950;
+  let busy = false;
+  let hovering = false;
+  let focused = false;
+  /** @type {ReturnType<typeof setTimeout> | undefined} */
+  let timer;
+
+  el.classList.add("is-enhanced");
+
+  /** Desplaza la tira `shift` cuadros desde la posición de reposo. @param {number} shift @param {boolean} animate */
+  const place = (shift, animate) => {
+    const [a, b] = frames();
+    const step = b.offsetLeft - a.offsetLeft;
+    const center = /** @type {HTMLElement} */ (track.parentElement).clientWidth / 2;
+    track.classList.toggle("is-moving", animate && slideMs > 0);
+    track.style.setProperty("--tw-filmstrip-x", `${center - (a.offsetLeft + slot * step + a.offsetWidth / 2) - shift * step}px`);
+  };
+
+  /** @param {number} index */
+  const mark = (index) => {
+    frames().forEach((frame, i) => frame.classList.toggle("is-active", i === index));
+    if (title) title.textContent = frames()[index]?.dataset.title ?? "";
+  };
+
+  const settle = (/** @type {() => void} */ done) => setTimeout(done, slideMs);
+
+  const next = () => {
+    if (busy) return;
+    busy = true;
+    mark(slot + 1);
+    place(1, true);
+    settle(() => {
+      track.append(frames()[0]);
+      place(0, false);
+      mark(slot);
+      busy = false;
+    });
+  };
+
+  const prev = () => {
+    if (busy) return;
+    busy = true;
+    const list = frames();
+    track.prepend(list[list.length - 1]);
+    place(1, false);
+    void track.offsetWidth; // aplica la posición sin animar antes de deslizar
+    mark(slot);
+    place(0, true);
+    settle(() => {
+      busy = false;
+    });
+  };
+
+  const schedule = () => {
+    clearTimeout(timer);
+    if (reducedMotion || hovering || focused || document.hidden || document.querySelector("dialog[open]")) return;
+    timer = setTimeout(() => {
+      next();
+      schedule();
+    }, interval);
+  };
+
+  el.querySelector("[data-tw-filmstrip-next]")?.addEventListener("click", () => {
+    next();
+    schedule();
+  });
+  el.querySelector("[data-tw-filmstrip-prev]")?.addEventListener("click", () => {
+    prev();
+    schedule();
+  });
+  el.addEventListener("mouseenter", () => { hovering = true; schedule(); });
+  el.addEventListener("mouseleave", () => { hovering = false; schedule(); });
+  el.addEventListener("focusin", () => { focused = true; schedule(); });
+  el.addEventListener("focusout", (event) => {
+    if (!el.contains(/** @type {Node | null} */ (event.relatedTarget))) {
+      focused = false;
+      schedule();
+    }
+  });
+  document.addEventListener("visibilitychange", schedule);
+  window.addEventListener("resize", () => place(0, false));
+
+  place(0, false);
+  mark(slot);
+  schedule();
+}
+
+/** @param {ParentNode} root */
+export function initFilmStrips(root = document) {
+  root.querySelectorAll("[data-tw-filmstrip]").forEach((node) => {
+    if (bound.has(node)) return;
+    bound.add(node);
+    createFilmStrip(/** @type {HTMLElement} */ (node));
+  });
+}
+
+/* ── Slider de cabecera de la galería ────────────────────────────── */
+/**
+ * Fotos que se funden; cada una se descarga recién cuando le toca (y la siguiente queda
+ * precargada). Autoplay que se pausa con hover/foco y con la pestaña oculta; flechas, puntos,
+ * teclado y deslizar con el dedo.
+ * @param {HTMLElement} el
+ */
+function createGallerySlider(el) {
+  const slides = /** @type {HTMLElement[]} */ ([...el.querySelectorAll("[data-tw-slide]")]);
+  const dots = [...el.querySelectorAll("[data-tw-slider-go]")];
+  if (slides.length < 2) return;
+  const interval = Number(el.dataset.interval) || 5500;
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let current = 0;
+  let paused = false;
+  /** @type {ReturnType<typeof setTimeout> | undefined} */
+  let timer;
+
+  /** @param {number} index */
+  const preload = (index) => {
+    const img = slides[(index + slides.length) % slides.length].querySelector("img");
+    if (!img) return Promise.resolve();
+    const src = img.getAttribute("data-src");
+    if (src) {
+      img.src = src;
+      img.removeAttribute("data-src");
+    }
+    return img.complete ? Promise.resolve() : img.decode().catch(() => {});
+  };
+
+  const stop = () => clearTimeout(timer);
+  const schedule = () => {
+    stop();
+    if (paused || reducedMotion || document.hidden) return;
+    timer = setTimeout(() => go(current + 1), interval);
+  };
+
+  /** @param {number} index */
+  function go(index) {
+    const target = (index + slides.length) % slides.length;
+    if (target === current) return;
+    stop();
+    preload(target).then(() => {
+      slides[current].classList.remove("is-active");
+      current = target;
+      slides[current].classList.add("is-active");
+      dots.forEach((dot, i) => {
+        dot.classList.toggle("is-active", i === current);
+        dot.setAttribute("aria-selected", String(i === current));
+      });
+      preload(current + 1);
+      schedule();
+    });
+  }
+
+  el.addEventListener("click", (event) => {
+    const target = /** @type {Element} */ (event.target);
+    const move = target.closest("[data-tw-slider-move]");
+    if (move) return go(current + Number(move.getAttribute("data-tw-slider-move")));
+    const dot = target.closest("[data-tw-slider-go]");
+    if (dot) go(Number(dot.getAttribute("data-tw-slider-go")));
+  });
+  el.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft") go(current - 1);
+    if (event.key === "ArrowRight") go(current + 1);
+  });
+  /** @type {number | null} */
+  let startX = null;
+  el.addEventListener("pointerdown", (event) => {
+    if (event.pointerType !== "mouse") startX = event.clientX;
+  });
+  el.addEventListener("pointerup", (event) => {
+    if (startX === null) return;
+    const delta = event.clientX - startX;
+    startX = null;
+    if (Math.abs(delta) > 45) go(current + (delta < 0 ? 1 : -1));
+  });
+  for (const [type, value] of /** @type {const} */ ([["mouseenter", true], ["mouseleave", false], ["focusin", true], ["focusout", false]])) {
+    el.addEventListener(type, () => {
+      paused = value;
+      if (value) stop();
+      else schedule();
+    });
+  }
+  document.addEventListener("visibilitychange", schedule);
+
+  preload(1);
+  schedule();
+}
+
+/** @param {ParentNode} root */
+export function initGallerySliders(root = document) {
+  root.querySelectorAll("[data-tw-slider]").forEach((node) => {
+    if (bound.has(node)) return;
+    bound.add(node);
+    createGallerySlider(/** @type {HTMLElement} */ (node));
+  });
+}
+
+/* ── Entrada de fotos (galería) ──────────────────────────────────── */
+let revealBurst = 0;
+/** @type {ReturnType<typeof setTimeout> | undefined} */
+let revealReset;
+
+/**
+ * La foto entra al terminar de cargar (desenfoque → nítida), escalonada dentro de cada tanda
+ * que llega junta; su marco deja el shimmer.
+ * @param {HTMLImageElement} img
+ */
+function reveal(img) {
+  if (img.classList.contains("is-ready")) return;
+  img.style.setProperty("--tw-reveal-delay", `${Math.min(revealBurst++, 12) * 45}ms`);
+  clearTimeout(revealReset);
+  revealReset = setTimeout(() => (revealBurst = 0), 250);
+  requestAnimationFrame(() => {
+    img.classList.add("is-ready");
+    img.parentElement?.classList.remove("is-loading");
+  });
+}
+
+let revealBound = false;
+/** @param {ParentNode} root */
+export function initReveal(root = document) {
+  root.querySelectorAll("img[data-tw-reveal]").forEach((img) => {
+    const image = /** @type {HTMLImageElement} */ (img);
+    if (image.complete && image.naturalWidth) reveal(image);
+  });
+  if (revealBound) return;
+  revealBound = true;
+  // `load` y `error` no burbujean: se escuchan en captura (también las fotos que llegan después).
+  document.addEventListener("load", (event) => {
+    if (event.target instanceof HTMLImageElement && event.target.hasAttribute("data-tw-reveal")) reveal(event.target);
+  }, true);
+  document.addEventListener("error", (event) => {
+    if (event.target instanceof HTMLImageElement && event.target.hasAttribute("data-tw-reveal")) event.target.parentElement?.classList.remove("is-loading");
+  }, true);
+}
+
 /* ── Toast ───────────────────────────────────────────────────────── */
 /**
  * @param {string} message
@@ -206,4 +455,7 @@ export function initDesignSystem(root = document) {
   initDisclosures(root);
   initModals();
   initCarousels(root);
+  initFilmStrips(root);
+  initGallerySliders(root);
+  initReveal(root);
 }

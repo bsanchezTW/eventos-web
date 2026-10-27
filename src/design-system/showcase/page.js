@@ -7,6 +7,7 @@ import {
   Alert,
   Availability,
   Badge,
+  AlbumCover,
   Banner,
   Button,
   CarouselDots,
@@ -23,6 +24,9 @@ import {
   Eyebrow,
   FactList,
   Field,
+  FilmStrip,
+  GallerySectionHead,
+  GallerySlider,
   Grid,
   Heading,
   Icon,
@@ -36,6 +40,8 @@ import {
   MediaFrame,
   Modal,
   MonthCalendar,
+  PhotoTile,
+  PhotoTileSkeleton,
   OptionGroup,
   SearchBar,
   SearchField,
@@ -190,6 +196,38 @@ export function renderShowcasePage({ tokens }) {
             text: "Edificio Transworld, Huechuraba",
             actions: html`${Button({ label: "Inscribirme", variant: "accent", size: "lg" })}${Button({ label: "Ver todos los eventos", variant: "on-dark", size: "lg" })}`,
           })}
+        </div>
+        <div class="tw-mt-5">
+          ${FilmStrip({
+            label: "Rollo fotográfico de ejemplo",
+            frames: ["Transworld Connect", "Jornada Radwin", "Integradores Lima", "Taller de fibra", "Demo en terreno", "Encuentro tecnológico"].map((title) => ({
+              src: BRAND.heroImage,
+              href: "#patrones",
+              title: `Rollo fotográfico (FilmStrip): ${title}`,
+            })),
+          })}
+        </div>
+        <div class="tw-mt-5">
+          ${GallerySlider({
+            slides: [BRAND.heroImage, BRAND.heroImage],
+            label: "Slider de álbum de ejemplo",
+            back: { href: "#patrones", label: "Galería" },
+            eyebrow: ["Galería", "7 de septiembre de 2026"],
+            title: "Slider de álbum (GallerySlider)",
+            text: "Fotos que se funden, velo, volver en vidrio, chips y controles.",
+            chips: [{ icon: "image", label: "128 fotos" }],
+            headingLevel: 2,
+          })}
+          <div class="tw-album-grid tw-mb-6">
+            ${AlbumCover({ href: "#patrones", image: BRAND.heroImage, title: "Tarjeta de álbum (AlbumCover)", marks: ["7 de septiembre de 2026"], text: "Foto con velo y título encima; descripción y Ver galería." })}
+            ${AlbumCover({ href: "#patrones", title: "Sin portada", text: "" })}
+          </div>
+          ${GallerySectionHead({ title: "Fotos y videos (GallerySectionHead)", meta: "6 archivos" })}
+          <div class="tw-photo-grid">
+            ${[0, 1, 2].map((i) => PhotoTile({ src: BRAND.heroImage, label: `Ver foto ${i + 1}` }))}
+            ${PhotoTile({ video: true, label: "Ver video" })}
+            ${PhotoTileSkeleton()}
+          </div>
         </div>
         <div class="tw-stack tw-gap-4 tw-mt-5">
           ${CtaBand({ tone: "accent", title: "Banda CTA lime", text: "Cierre de sección con acción a la derecha.", action: Button({ label: "Solicitar contacto", variant: "light", size: "lg" }) })}

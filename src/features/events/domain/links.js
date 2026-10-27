@@ -14,4 +14,6 @@ export const API = {
   /** @param {string} id */
   registrations: (id) => `/api/eventos/${encodeURIComponent(id)}/inscripciones`,
   subscriptions: "/api/suscripciones",
+  /** @param {string} slug @param {number} offset @param {number} limit */
+  albumItems: (slug, offset, limit) => `/api/galeria/${encodeURIComponent(slug)}?desde=${offset}&cantidad=${limit}`,
 };

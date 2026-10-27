@@ -14,6 +14,8 @@ const PATHS = {
   "chevron-right": '<path d="M9 18l6-6-6-6"/>',
   "chevron-down": '<path d="M6 9l6 6 6-6"/>',
   "arrow-left": '<path d="M19 12H5M12 19l-7-7 7-7"/>',
+  image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
   "arrow-right": '<path d="M5 12h14M12 5l7 7-7 7"/>',
   "corner-down-right": '<path d="M5 4v7a4 4 0 0 0 4 4h11"/><path d="M15 10l5 5-5 5"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/>',

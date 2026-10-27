@@ -119,7 +119,7 @@ function initExplorer() {
 
     const action = target.closest("[data-action]")?.getAttribute("data-action");
     if (action === "clear-filters") update({ q: "", categories: [], modality: "", city: "", day: null });
-    else if (action === "toggle-past") update({ all: !query.all });
+    else if (action === "toggle-more") update({ all: !query.all });
     else if (action === "retry") update();
   });
 }

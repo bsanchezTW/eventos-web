@@ -109,6 +109,32 @@
   --tw-gradient-banner: linear-gradient(110deg, #293f68 10%, rgba(41, 63, 104, 0.86) 60%, rgba(21, 32, 52, 0.5) 100%);
   --tw-gradient-caption: linear-gradient(transparent, rgba(21, 32, 52, 0.78));
   --tw-gradient-glow: radial-gradient(circle, rgba(174, 248, 57, 0.18), transparent 70%);
+
+  /* Galería de álbumes (copia de la galería de la intranet) */
+  --tw-gallery-ink: rgba(6, 20, 36, 1);
+  --tw-gallery-veil-hero: linear-gradient(to top, rgba(6, 20, 36, 0.9) 0%, rgba(6, 20, 36, 0.55) 34%, rgba(6, 20, 36, 0) 66%), linear-gradient(to right, rgba(6, 20, 36, 0.35) 0%, rgba(6, 20, 36, 0) 55%);
+  --tw-gallery-veil-card: linear-gradient(to top, rgba(6, 20, 36, 0.86) 0%, rgba(6, 20, 36, 0.35) 42%, rgba(6, 20, 36, 0) 68%);
+  --tw-gallery-veil-tile: linear-gradient(to top, rgba(6, 20, 36, 0.45), rgba(6, 20, 36, 0) 55%);
+  --tw-gallery-hero-bg: radial-gradient(circle at 85% 15%, rgba(177, 242, 42, 0.28) 0%, rgba(177, 242, 42, 0) 42%), linear-gradient(135deg, var(--tw-navy-700) 0%, var(--tw-navy-600) 100%);
+  --tw-gallery-card-bg: linear-gradient(135deg, var(--tw-navy-700) 0%, var(--tw-navy-600) 100%);
+  --tw-gallery-glass: rgba(6, 20, 36, 0.35);
+  --tw-gallery-glass-strong: rgba(6, 20, 36, 0.55);
+  --tw-gallery-viewer-bg: rgba(4, 12, 22, 0.95);
+  --tw-gallery-shimmer: linear-gradient(100deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.45) 50%, rgba(255, 255, 255, 0) 70%);
+  --tw-gallery-shimmer-dark: linear-gradient(100deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.14) 50%, rgba(255, 255, 255, 0) 70%);
+  --tw-gallery-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --tw-gallery-pop: cubic-bezier(0.16, 0.84, 0.3, 1.08);
+  --tw-tint-white-16: rgba(255, 255, 255, 0.16);
+  --tw-tint-white-24: rgba(255, 255, 255, 0.24);
+  --tw-tint-white-28: rgba(255, 255, 255, 0.28);
+  --tw-tint-white-35: rgba(255, 255, 255, 0.35);
+  --tw-tint-white-45: rgba(255, 255, 255, 0.45);
+  --tw-tint-white-50: rgba(255, 255, 255, 0.5);
+  --tw-tint-white-72: rgba(255, 255, 255, 0.72);
+  --tw-tint-white-86: rgba(255, 255, 255, 0.86);
+  --tw-shadow-gallery: 0 18px 48px rgba(6, 20, 36, 0.18);
+  --tw-shadow-gallery-media: 0 20px 60px rgba(0, 0, 0, 0.5);
+  --tw-text-shadow-gallery: 0 2px 24px rgba(0, 0, 0, 0.28);
   --tw-pattern-placeholder: repeating-linear-gradient(135deg, #e4e9ee 0 9px, #f1f4f7 9px 18px);
 
   --tw-scrim: rgba(21, 32, 52, 0.55);

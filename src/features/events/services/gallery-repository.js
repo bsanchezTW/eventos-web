@@ -7,43 +7,93 @@
  *   rpc galeria_web()                          álbumes con "Mostrar en la web" y sus archivos
  *   POST /storage/v1/object/sign/<bucket>      URLs firmadas (los buckets son privados); la
  *                                              política galeria_web_lectura solo firma esos álbumes
- * Las fotos originales pesan varios MB: la grilla usa miniaturas con transformación de imagen
- * de Supabase y, si el proyecto no la tiene, cae al original.
+ *
+ * Cuota de Supabase: ninguna foto se sirve en su tamaño original. Las fotos van con la
+ * transformación de imagen (WebP reducido, foto completa con `resize: contain`): miniatura para
+ * grillas, versión de pantalla para el lightbox y una aún más chica para el rollo de la portada.
+ * Los álbumes se firman por páginas (lo que se ve), no completos. Si el proyecto no tuviera la
+ * transformación, se cae al original firmado.
  * SQL de la intranet: intranet-web/supabase/shared/schema.sql (sección "Web pública de eventos").
  */
 import { ALBUMS } from "../data/gallery.mock.js";
-import { PREVIEW_COUNT, countryName } from "../domain/gallery.js";
+import { countryName } from "../domain/gallery.js";
 import { RepositoryError } from "./errors.js";
 
 /** @typedef {import("../domain/gallery.js").Album} Album */
 /** @typedef {import("../domain/gallery.js").MediaItem} MediaItem */
+/** @typedef {import("../domain/gallery.js").ReelPhoto} ReelPhoto */
 
 /**
  * @typedef {object} GalleryRepository
  * @property {() => Promise<Album[]>} listAlbums  más recientes primero
- * @property {(slug: string) => Promise<{ album: Album, items: MediaItem[] } | null>} getAlbum
+ * @property {(slug: string, page?: { offset?: number, limit?: number }) => Promise<{ album: Album, items: MediaItem[], total: number } | null>} getAlbum
+ *   piezas del álbum desde `offset` (por defecto todas)
+ * @property {(count: number) => Promise<ReelPhoto[]>} samplePhotos  fotos al azar de todos los álbumes
+ * @property {(slug: string, count: number) => Promise<MediaItem[]>} albumSlides  slider del álbum: la portada y otras al azar, en tamaño de pantalla
  */
+
+/** Tamaños pedidos a la transformación de imagen de Supabase (siempre la foto completa). */
+export const IMAGE_SIZES = {
+  thumb: { width: 640, height: 640, resize: "contain", quality: 70 },
+  view: { width: 1600, height: 1600, resize: "contain", quality: 75 },
+  reel: { width: 480, height: 480, resize: "contain", quality: 65 },
+};
 
 /** @param {MediaItem[]} items */
 const counts = (items) => ({ photos: items.filter((i) => i.type === "foto").length, videos: items.filter((i) => i.type === "video").length });
 
+/** @param {{ offset?: number, limit?: number }} page @param {number} total */
+const pageRange = ({ offset = 0, limit = Number.POSITIVE_INFINITY }, total) => {
+  const start = Math.max(0, Math.min(Math.floor(offset) || 0, total));
+  return [start, Math.min(total, start + Math.max(0, limit))];
+};
+
 /**
- * @param {{ albums?: typeof ALBUMS }} [options]
+ * `count` elementos al azar sin repetir (Fisher-Yates parcial).
+ * @template T @param {T[]} list @param {number} count @param {() => number} [random]
+ */
+export function sample(list, count, random = Math.random) {
+  const copy = [...list];
+  const n = Math.min(count, copy.length);
+  for (let i = 0; i < n; i++) {
+    const j = i + Math.floor(random() * (copy.length - i));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy.slice(0, n);
+}
+
+/**
+ * @param {{ albums?: typeof ALBUMS, random?: () => number }} [options]
  * @returns {GalleryRepository}
  */
-export function createMockGalleryRepository({ albums = ALBUMS } = {}) {
+export function createMockGalleryRepository({ albums = ALBUMS, random = Math.random } = {}) {
   /** @param {(typeof ALBUMS)[number]} a @returns {Album} */
-  const toAlbum = (a) => {
-    const previews = a.items.filter((i) => i.type === "foto").slice(0, PREVIEW_COUNT);
-    return { slug: a.slug, title: a.title, description: a.description, country: a.country, cover: previews[0] ?? null, previews, ...counts(a.items) };
-  };
+  const toAlbum = (a) => ({
+    slug: a.slug,
+    title: a.title,
+    description: a.description,
+    country: a.country,
+    date: a.date ?? null,
+    cover: a.items.find((i) => i.type === "foto") ?? null,
+    ...counts(a.items),
+  });
   return {
     async listAlbums() {
       return albums.map(toAlbum);
     },
-    async getAlbum(slug) {
+    async getAlbum(slug, page = {}) {
       const found = albums.find((a) => a.slug === slug);
-      return found ? { album: toAlbum(found), items: found.items.map((i) => ({ ...i })) } : null;
+      if (!found) return null;
+      const [start, end] = pageRange(page, found.items.length);
+      return { album: toAlbum(found), items: found.items.slice(start, end).map((i) => ({ ...i })), total: found.items.length };
+    },
+    async albumSlides(slug, count) {
+      const photos = albums.find((a) => a.slug === slug)?.items.filter((i) => i.type === "foto") ?? [];
+      return [...photos.slice(0, 1), ...sample(photos.slice(1), count - 1, random)].map((i) => ({ ...i }));
+    },
+    async samplePhotos(count) {
+      const photos = albums.flatMap((a) => a.items.filter((i) => i.type === "foto").map((item) => ({ album: { slug: a.slug, title: a.title }, item: { ...item } })));
+      return sample(photos, count, random);
     },
   };
 }
@@ -62,6 +112,7 @@ export function createMockGalleryRepository({ albums = ALBUMS } = {}) {
  * @property {string | null} descripcion
  * @property {string} pais
  * @property {string | null} portada  "/content/eventos/<slug>/<archivo>" (ruta de la intranet)
+ * @property {string | null} [creado]  fecha del álbum (UTC, sin zona)
  * @property {RawFile[]} archivos
  */
 
@@ -78,13 +129,6 @@ export function coverFile(raw) {
     path = "";
   }
   return photos.find((f) => f.ruta === path) ?? photos[0] ?? null;
-}
-
-/** Fotos de muestra: la portada y las siguientes, hasta PREVIEW_COUNT. @param {RawAlbum} raw */
-export function previewFiles(raw) {
-  const cover = coverFile(raw);
-  const photos = raw.archivos.filter((f) => mediaType(f.tipo) === "foto" && f !== cover);
-  return (cover ? [cover, ...photos] : photos).slice(0, PREVIEW_COUNT);
 }
 
 /**
@@ -114,9 +158,9 @@ async function mapLimit(list, limit, fn) {
  *   fetchImpl?: typeof fetch,
  *   cacheTtlMs?: number,
  *   signExpiresS?: number,
- *   thumbWidth?: number,
  *   concurrency?: number,
  *   clock?: () => number,
+ *   random?: () => number,
  *   logger?: Pick<Console, "warn">,
  * }} options
  * @returns {GalleryRepository}
@@ -128,9 +172,9 @@ export function createIntranetGalleryRepository({
   fetchImpl = fetch,
   cacheTtlMs = 600_000,
   signExpiresS = 21_600,
-  thumbWidth = 640,
   concurrency = 8,
   clock = Date.now,
+  random = Math.random,
   logger = console,
 }) {
   const storage = `${url.replace(/\/+$/, "")}/storage/v1`;
@@ -154,7 +198,7 @@ export function createIntranetGalleryRepository({
     return { ok: response.ok, status: response.status, json: await response.json().catch(() => null) };
   }
 
-  /** URLs firmadas a tamaño completo, en lotes por bucket. @param {RawFile[]} files @returns {Promise<Map<string, string>>} */
+  /** URLs firmadas a tamaño original, en lotes por bucket (videos y respaldo sin transformación). @param {RawFile[]} files @returns {Promise<Map<string, string>>} */
   async function signFull(files) {
     /** @type {Map<string, string>} */
     const urls = new Map();
@@ -172,103 +216,165 @@ export function createIntranetGalleryRepository({
     return urls;
   }
 
-  /** Miniatura firmada (transformación de imagen) o null si no se pudo. @param {RawFile} file */
-  async function signThumb(file) {
+  /** Foto reducida firmada (transformación de imagen) o null si no se pudo. @param {RawFile} file @param {keyof typeof IMAGE_SIZES} size */
+  async function signSized(file, size) {
     if (!transformsAvailable) return null;
-    const res = await post(`/object/sign/${encodeURIComponent(file.bucket)}/${encodePath(file.ruta)}`, {
-      expiresIn: signExpiresS,
-      transform: { width: thumbWidth, quality: 70 },
-    });
+    const res = await post(`/object/sign/${encodeURIComponent(file.bucket)}/${encodePath(file.ruta)}`, { expiresIn: signExpiresS, transform: IMAGE_SIZES[size] });
     const signed = res.ok && res.json && typeof res.json.signedURL === "string" ? res.json.signedURL : null;
     if (!signed) {
       transformsAvailable = false;
-      logger.warn(`[galeria] Sin miniaturas (transformación de imagen no disponible, ${res.status}); se usan los originales.`);
+      logger.warn(`[galeria] Sin transformación de imagen (${res.status}); se usan los originales.`);
       return null;
     }
     return `${storage}${signed}`;
   }
 
-  /** Portada en grande para el fondo del hero; si no hay transformación, el original. @param {RawFile} file */
-  async function signLarge(file) {
-    if (!transformsAvailable) return null;
-    const res = await post(`/object/sign/${encodeURIComponent(file.bucket)}/${encodePath(file.ruta)}`, {
-      expiresIn: signExpiresS,
-      transform: { width: 1920, quality: 75 },
-    });
-    return res.ok && typeof res.json?.signedURL === "string" ? `${storage}${res.json.signedURL}` : null;
-  }
-
-  /** @param {RawFile} file @param {Map<string, string>} full @returns {Promise<MediaItem>} */
-  async function toItem(file, full) {
+  /**
+   * @param {RawFile} file
+   * @param {Map<string, string>} full
+   * @param {Array<keyof typeof IMAGE_SIZES>} sizes  `thumb` (o `reel`, más chica) para la miniatura; `view` para el lightbox
+   * @returns {Promise<MediaItem>}
+   */
+  async function toItem(file, full, sizes = ["thumb", "view"]) {
     const type = mediaType(file.tipo) ?? "foto";
-    const src = full.get(`${file.bucket}/${file.ruta}`) ?? null;
-    const thumb = type === "foto" ? ((await signThumb(file)) ?? src) : null;
-    return { id: `${file.bucket}/${file.ruta}`, type, thumb, src, slot: type === "video" ? "[ VIDEO ]" : "[ FOTO ]" };
+    const original = full.get(`${file.bucket}/${file.ruta}`) ?? null;
+    if (type === "video") return { id: `${file.bucket}/${file.ruta}`, type, thumb: null, src: original, slot: "[ VIDEO ]" };
+    const sized = async (/** @type {keyof typeof IMAGE_SIZES} */ size) => (await signSized(file, size)) ?? original;
+    const thumb = sizes.includes("reel") ? await sized("reel") : sizes.includes("thumb") ? await sized("thumb") : null;
+    const src = sizes.includes("view") ? await sized("view") : thumb;
+    return { id: `${file.bucket}/${file.ruta}`, type, thumb, src, slot: "[ FOTO ]" };
   }
 
-  /** @param {RawAlbum} raw @param {MediaItem[]} previews @returns {Album} */
-  function toAlbum(raw, previews) {
+  /** @param {RawAlbum} raw @param {MediaItem | null} cover @returns {Album} */
+  function toAlbum(raw, cover) {
     const files = raw.archivos.filter((f) => mediaType(f.tipo));
     return {
       slug: raw.slug,
       title: String(raw.nombre ?? "").trim(),
       description: String(raw.descripcion ?? "").trim(),
       country: countryName(raw.pais),
-      cover: previews[0] ?? null,
-      previews,
+      date: typeof raw.creado === "string" ? raw.creado : null,
+      cover,
       photos: files.filter((f) => mediaType(f.tipo) === "foto").length,
       videos: files.filter((f) => mediaType(f.tipo) === "video").length,
     };
   }
 
+  /** Lista de álbumes con su portada en miniatura (solo eso se firma). */
   async function loadList() {
     transformsAvailable = true;
     const rows = await rpc("galeria_web");
     const raws = /** @type {RawAlbum[]} */ (Array.isArray(rows) ? rows : []).map((r) => ({ ...r, archivos: Array.isArray(r.archivos) ? r.archivos : [] }));
-    const previewSets = raws.map(previewFiles);
-    const full = await signFull(previewSets.flat());
-    const previews = await mapLimit(previewSets, concurrency, async (files) => {
-      const items = await Promise.all(files.map((f) => toItem(f, full)));
-      if (items[0]) items[0].large = (await signLarge(files[0])) ?? items[0].src;
-      return items;
-    });
-    return raws.map((raw, i) => ({ raw, album: toAlbum(raw, previews[i]) }));
+    const covers = raws.map(coverFile);
+    const full = await signFull(/** @type {RawFile[]} */ (covers.filter(Boolean)));
+    const items = await mapLimit(covers, concurrency, (file) => (file ? toItem(file, full, ["thumb"]) : Promise.resolve(null)));
+    return raws.map((raw, i) => ({ raw, album: toAlbum(raw, items[i]) }));
   }
 
   /** @type {{ at: number, data: ReturnType<typeof loadList> } | null} */
   let listCache = null;
-  /** @type {Map<string, { at: number, data: Promise<MediaItem[]> }>} */
+  /** Piezas ya firmadas, por id (los álbumes se piden por páginas). @type {Map<string, { at: number, data: Promise<MediaItem> }>} */
   const itemCache = new Map();
+  /** @type {{ at: number, count: number, data: Promise<ReelPhoto[]> } | null} */
+  let sampleCache = null;
+  /** Slider de cada álbum (otras fotos al azar cuando vence). @type {Map<string, { at: number, data: Promise<MediaItem[]> }>} */
+  const slidesCache = new Map();
 
-  /** @template T @param {{ at: number, data: Promise<T> } | null | undefined} entry */
-  const fresh = (entry) => entry && clock() - entry.at < cacheTtlMs;
+  /** @template T @param {{ at: number, data: Promise<T> } | null | undefined} entry @param {number} [ttl] */
+  const fresh = (entry, ttl = cacheTtlMs) => entry && clock() - entry.at < ttl;
+  // Las piezas firmadas se reutilizan media vida de la firma: la misma URL vuelve a salir de la
+  // caché de Supabase en vez de generar otra vez la versión reducida.
+  const signedTtlMs = (signExpiresS * 1000) / 2;
+
+  /**
+   * @template {{ at: number, data: Promise<any> }} E
+   * @param {E} entry
+   * @param {() => void} drop
+   * @returns {E}
+   */
+  const forgetOnError = (entry, drop) => {
+    entry.data.catch(drop);
+    return entry;
+  };
 
   function list() {
     if (listCache && fresh(listCache)) return listCache.data;
-    const entry = { at: clock(), data: loadList() };
-    listCache = entry;
-    entry.data.catch(() => {
+    const entry = forgetOnError({ at: clock(), data: loadList() }, () => {
       if (listCache === entry) listCache = null;
     });
+    listCache = entry;
     return entry.data;
+  }
+
+  /** Firma lo que falte de estas piezas (en un lote por bucket) y las devuelve en orden. @param {RawFile[]} files */
+  async function signedItems(files) {
+    const id = (/** @type {RawFile} */ f) => `${f.bucket}/${f.ruta}`;
+    const missing = files.filter((f) => !fresh(itemCache.get(id(f)), signedTtlMs));
+    if (missing.length) {
+      const full = signFull(missing);
+      for (const file of missing) {
+        const entry = forgetOnError({ at: clock(), data: full.then((urls) => toItem(file, urls)) }, () => {
+          if (itemCache.get(id(file)) === entry) itemCache.delete(id(file));
+        });
+        itemCache.set(id(file), entry);
+      }
+    }
+    return mapLimit(files, concurrency, (f) => /** @type {{ data: Promise<MediaItem> }} */ (itemCache.get(id(f))).data);
+  }
+
+  /** @param {number} count */
+  async function loadSample(count) {
+    const albums = await list();
+    const photos = albums.flatMap(({ raw, album }) => raw.archivos.filter((f) => mediaType(f.tipo) === "foto").map((file) => ({ file, album })));
+    const chosen = sample(photos, count, random);
+    const full = await signFull(chosen.map((c) => c.file));
+    return mapLimit(chosen, concurrency, async ({ file, album }) => ({ album: { slug: album.slug, title: album.title }, item: await toItem(file, full, ["reel"]) }));
   }
 
   return {
     async listAlbums() {
       return (await list()).map((a) => structuredClone(a.album));
     },
-    async getAlbum(slug) {
+    async getAlbum(slug, page = {}) {
       const found = (await list()).find((a) => a.raw.slug === slug);
       if (!found) return null;
-      let entry = itemCache.get(slug);
+      const files = found.raw.archivos.filter((f) => mediaType(f.tipo));
+      const [start, end] = pageRange(page, files.length);
+      return { album: structuredClone(found.album), items: structuredClone(await signedItems(files.slice(start, end))), total: files.length };
+    },
+    async albumSlides(slug, count) {
+      const found = (await list()).find((a) => a.raw.slug === slug);
+      if (!found) return [];
+      let entry = slidesCache.get(slug);
       if (!entry || !fresh(entry)) {
-        const files = found.raw.archivos.filter((f) => mediaType(f.tipo));
-        const data = signFull(files).then((full) => mapLimit(files, concurrency, (f) => toItem(f, full)));
-        entry = { at: clock(), data };
-        itemCache.set(slug, entry);
-        data.catch(() => itemCache.delete(slug));
+        const photos = found.raw.archivos.filter((f) => mediaType(f.tipo) === "foto");
+        const cover = coverFile(found.raw);
+        const chosen = [...(cover ? [cover] : []), ...sample(photos.filter((f) => f !== cover), count - (cover ? 1 : 0), random)];
+        const data = signFull(chosen).then((full) => mapLimit(chosen, concurrency, (file) => toItem(file, full, ["view"])));
+        const created = forgetOnError({ at: clock(), data }, () => {
+          if (slidesCache.get(slug) === created) slidesCache.delete(slug);
+        });
+        entry = created;
+        slidesCache.set(slug, entry);
       }
-      return { album: structuredClone(found.album), items: structuredClone(await entry.data) };
+      return structuredClone(await entry.data);
+    },
+    // La muestra se renueva con la caché: todas las visitas de ese rato la comparten (el servicio
+    // la baraja en cada visita) y con el tiempo pasan todas las fotos. Al vencer, se sigue
+    // entregando la anterior mientras se firma la nueva: la portada no espera esas firmas.
+    async samplePhotos(count) {
+      const previous = sampleCache && sampleCache.count === count ? sampleCache : null;
+      if (!previous || !fresh(previous)) {
+        const entry = forgetOnError({ at: clock(), count, data: loadSample(count) }, () => {
+          if (sampleCache === entry) sampleCache = previous;
+        });
+        sampleCache = entry;
+        if (previous) {
+          entry.data.catch(() => {});
+          return structuredClone(await previous.data);
+        }
+      }
+      return structuredClone(await /** @type {NonNullable<typeof sampleCache>} */ (sampleCache).data);
     },
   };
 }

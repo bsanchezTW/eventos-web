@@ -1,9 +1,11 @@
 /**
- * Álbum de la galería: grilla de miniaturas y lightbox a tamaño completo.
+ * Álbum de la galería con el diseño de la intranet: slider de cabecera (la portada y otras fotos
+ * al azar), "Fotos y videos" con el mosaico de miniaturas cuadradas (las tandas siguientes llegan
+ * al bajar) y el visor a pantalla completa.
  */
-import { Button, Eyebrow, Grid, Heading, Modal, Section, Text, html, raw } from "../../../design-system/index.js";
-import { LightboxContent, MediaCard } from "../components/gallery.js";
-import { mediaCountLabel } from "../domain/gallery.js";
+import { GallerySectionHead, GallerySlider, PhotoViewer, Section, html, raw } from "../../../design-system/index.js";
+import { MediaTiles, plural } from "../components/gallery.js";
+import { formatAlbumDate, mediaCountLabel } from "../domain/gallery.js";
 import { renderPage } from "./shell.js";
 
 /** @typedef {import("../domain/gallery.js").Album} Album */
@@ -13,33 +15,34 @@ import { renderPage } from "./shell.js";
 const jsonScript = (data) => raw(JSON.stringify(data).replace(/</g, "\\u003c"));
 
 /**
- * @param {{ album: Album, items: MediaItem[], categories: Array<{ id: string, name: string }>, canonical?: string }} props
+ * @param {{ album: Album, items: MediaItem[], total: number, slides: MediaItem[], categories: Array<{ id: string, name: string }>, canonical?: string }} props
+ *   `items`: la primera tanda; el cliente pide las siguientes al bajar. `slides`: fotos del slider.
  */
-export function renderAlbumPage({ album, items, categories, canonical }) {
-  const total = items.length;
+export function renderAlbumPage({ album, items, total, slides, categories, canonical }) {
+  const date = formatAlbumDate(album.date);
+  const left = total - items.length;
   const main = html`${Section({
     spacing: "page",
-    children: html`<div class="tw-cluster tw-gap-2-5 tw-mb-4">
-        ${Button({ label: "Volver a la galería", variant: "outline", size: "sm", icon: "arrow-left", href: "/galeria", className: "tw-btn--medium" })}
-      </div>
-      <div class="tw-section-header tw-mb-6">
-        <div class="tw-section-header__text">
-          ${Eyebrow({ children: `${album.country} · ${mediaCountLabel(album)}` })}
-          ${Heading({ level: 1, variant: "page", children: album.title })}
-          ${album.description ? Text({ children: album.description, className: "tw-measure" }) : ""}
-        </div>
-      </div>
-      ${Grid({ min: 220, fill: true, gap: "3-5", as: "ul", children: items.map((item, index) => MediaCard({ item, index, total })) })}
-      ${total
-        ? html`${Modal({
-            id: "lightbox",
-            titleId: "lightbox-title",
-            variant: "media",
-            flush: true,
-            showClose: false,
-            children: html`<div data-lightbox-content>${LightboxContent({ item: items[0], index: 0, total, title: album.title })}</div>`,
-          })}
-          <script type="application/json" id="gallery-data">${jsonScript({ title: album.title, items })}</script>`
+    children: html`${GallerySlider({
+        slides: slides.map((slide) => slide.src).filter((src) => typeof src === "string"),
+        label: `Fotos destacadas de ${album.title}`,
+        back: { href: "/galeria", label: "Galería" },
+        eyebrow: date ? ["Galería", date] : ["Galería"],
+        title: album.title,
+        text: album.description || undefined,
+        chips: [
+          { icon: "image", label: plural(album.photos, "foto", "fotos") },
+          ...(album.videos ? [{ icon: "video", label: plural(album.videos, "video", "videos") }] : []),
+        ],
+      })}
+      <section class="tw-gallery-section" aria-labelledby="galeria-fotos-titulo">
+        ${GallerySectionHead({ title: "Fotos y videos", id: "galeria-fotos-titulo", meta: plural(total, "archivo", "archivos") })}
+        <div class="tw-photo-grid" data-album-mosaic>${MediaTiles({ items, total })}</div>
+        ${left > 0 ? html`<div data-album-more aria-hidden="true"></div>` : ""}
+      </section>
+      ${items.length
+        ? html`${PhotoViewer({ id: "visor" })}
+          <script type="application/json" id="gallery-data">${jsonScript({ slug: album.slug, total, items })}</script>`
         : ""}`,
   })}`;
 

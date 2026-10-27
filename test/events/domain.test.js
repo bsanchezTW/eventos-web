@@ -263,3 +263,13 @@ test("cierre de inscripciones en la ficha (hora del evento)", () => {
   assert.equal(formatRegistrationDeadline({ timezone: "America/Santiago" }), null);
   assert.equal(normalizeEvent({ ...base, registrationClosesAt: "mañana" }).registrationClosesAt, undefined);
 });
+
+test("eventImage: las fotos de NEXUS se piden reducidas; las demás URLs no se tocan", async () => {
+  const { eventImage } = await import("../../src/features/events/domain/images.js");
+  const original = "https://evjocwzmlsyjixzihxep.supabase.co/storage/v1/object/public/imagenes/eventos/evento_1.png";
+  assert.equal(eventImage(original, "card"), "https://evjocwzmlsyjixzihxep.supabase.co/storage/v1/render/image/public/imagenes/eventos/evento_1.png?width=640&height=640&resize=contain&quality=70");
+  assert.match(eventImage(original, "hero"), /width=1600&height=1600&resize=contain&quality=75$/);
+  assert.equal(eventImage("/media/eventos/casa-matriz.jpg", "card"), "/media/eventos/casa-matriz.jpg");
+  assert.equal(eventImage("https://otro.example/storage/v1/object/public/x.png", "card"), "https://otro.example/storage/v1/object/public/x.png");
+  assert.equal(eventImage(undefined, "card"), "");
+});

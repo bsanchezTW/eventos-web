@@ -67,12 +67,13 @@ export function DateBadge({ day, month, srLabel }) {
 /**
  * Marco de imagen (o video) con proporción fija. Sin `src` muestra el placeholder rayado del template.
  * `kind: "video"` reproduce con controles nativos (`alt` pasa a ser su nombre accesible).
- * @param {{ src?: string | null, alt?: string, kind?: "image" | "video", ratio?: "16x10" | "16x9" | "4x5", slot?: Renderable, badge?: Renderable, caption?: Renderable, loading?: "lazy" | "eager", className?: string }} props
+ * `fit: "contain"` muestra la foto completa (lightbox); mientras carga, el marco muestra un skeleton.
+ * @param {{ src?: string | null, alt?: string, kind?: "image" | "video", ratio?: "16x10" | "16x9" | "4x5", fit?: "cover" | "contain", slot?: Renderable, badge?: Renderable, caption?: Renderable, loading?: "lazy" | "eager", className?: string }} props
  */
-export function MediaFrame({ src, alt = "", kind = "image", ratio = "16x10", slot, badge, caption, loading = "lazy", className }) {
+export function MediaFrame({ src, alt = "", kind = "image", ratio = "16x10", fit = "cover", slot, badge, caption, loading = "lazy", className }) {
   const media = kind === "video"
     ? html`<video class="tw-media__img tw-media__img--contain"${attrs({ src, controls: true, preload: "metadata", playsinline: true, "aria-label": alt || null })}></video>`
-    : html`<img class="tw-media__img" src="${src}" alt="${alt}" loading="${loading}" decoding="async">`;
+    : html`<img class="${cx("tw-media__img", fit === "contain" && "tw-media__img--contain")}" src="${src}" alt="${alt}" loading="${loading}" decoding="async">`;
   return html`<div class="${cx("tw-media", ratio !== "16x10" && `tw-media--${ratio}`, className)}">
     ${src ? media : html`<span class="tw-media__slot" aria-hidden="true">${slot ?? "[ IMAGEN ]"}</span>`}
     ${badge ? html`<span class="tw-media__badge">${badge}</span>` : ""}

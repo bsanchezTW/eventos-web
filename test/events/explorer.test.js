@@ -53,7 +53,7 @@ test("sortEvents: próximos, luego realizados (recientes primero), cancelados al
   assert.equal(sortEvents(applyFilters(views, DEFAULT_QUERY), "cupos")[0].id, "curso-fusion-empalme-fibra");
 });
 
-test("buildExplorer: sin mes, la lista son los próximos y el calendario abre en el mes del próximo", () => {
+test("buildExplorer: sin mes, la lista es toda la agenda y el calendario abre en el mes del próximo", () => {
   const result = buildExplorer(views, DEFAULT_QUERY, { now: NOW });
   assert.equal(result.query.month, null, "ningún mes elegido: pestaña Todos");
   assert.equal(result.calendar?.key, "2026-10");
@@ -61,9 +61,10 @@ test("buildExplorer: sin mes, la lista son los próximos y el calendario abre en
   assert.deepEqual(result.months.map((m) => m.key), ["2026-09", "2026-10", "2026-11", "2026-12"], "pestañas desde el mes actual");
   assert.deepEqual(result.calendar?.markers, { 8: 1, 15: 1, 20: 1, 22: 1, 29: 1 });
   assert.equal(result.calendar?.today, null);
-  assert.ok(result.items.length > 0 && result.items.every((e) => e.status !== "finished"), "solo próximos, en curso o cancelados");
-  assert.ok(result.past.length > 0 && result.past.every((e) => e.status === "finished"), "los realizados van aparte");
-  assert.equal(result.items.length + result.past.length, result.total, "cada evento una sola vez");
+  assert.equal(result.items.length, result.total, "cada evento una sola vez");
+  const ranks = result.items.map((e) => (e.status === "cancelled" ? 2 : e.status === "finished" ? 1 : 0));
+  assert.ok(ranks.every((r, i) => i === 0 || ranks[i - 1] <= r), "primero los próximos, después los realizados");
+  assert.ok(ranks.includes(1), "los realizados siguen en la misma lista");
 });
 
 test("buildExplorer: mes explícito, día y 'hoy'", () => {
@@ -72,7 +73,6 @@ test("buildExplorer: mes explícito, día y 'hoy'", () => {
   assert.equal(sep.query.month, "2026-09");
   assert.equal(sep.calendar?.today, 28);
   assert.ok(sep.items.some((e) => e.status === "finished"), "en un mes elegido van también los realizados de ese mes");
-  assert.deepEqual(sep.past, [], "y no se repiten abajo");
 
   const day = buildExplorer(views, q({ dia: "2026-10-15" }), { now: NOW });
   assert.deepEqual(day.items.map((e) => e.id), ["demo-inalambrica-mineria"]);
@@ -98,20 +98,23 @@ test("buildExplorer: sin próximos, el calendario abre el mes más reciente con 
   const past = views.filter((e) => e.status === "finished");
   const result = buildExplorer(past, DEFAULT_QUERY, { now: NOW });
   assert.equal(result.calendar?.key, "2026-09");
-  assert.deepEqual(result.items, []);
-  assert.equal(result.past.length, past.filter((e) => !e.parentId).length);
+  assert.equal(result.items.length, past.filter((e) => !e.parentId).length, "sin próximos, la lista son los realizados");
 });
 
-test("ExplorerResults: una lista, realizados plegados y calendario al lado", () => {
-  const closed = String(ExplorerResults({ explorer: buildExplorer(views, DEFAULT_QUERY, { now: NOW }) }));
+test("ExplorerResults: 2 junto al calendario, 4 con foto en una fila y el resto tras Ver más", () => {
   const result = buildExplorer(views, DEFAULT_QUERY, { now: NOW });
-  assert.equal((closed.match(/tw-card--row/g) ?? []).length, result.items.length, "los realizados no se dibujan hasta desplegarlos");
-  assert.ok(closed.includes(`Ver eventos realizados (${result.past.length})`));
-  assert.match(closed, /<ul class="tw-stack tw-gap-3-5" role="list" id="realizados" hidden>/);
+  const rest = result.items.length - 6;
+  assert.ok(rest > 0, "los mocks alcanzan para las tres zonas");
+  const closed = String(ExplorerResults({ explorer: result }));
+  assert.equal((closed.match(/tw-card--row/g) ?? []).length, 2, "dos tarjetas junto al calendario");
+  assert.match(closed, /<ul class="tw-grid tw-grid--min-260 tw-gap-3-5 tw-grid--quad tw-mt-6" role="list">/);
+  assert.equal((closed.match(/tw-card--flush/g) ?? []).length, 4, "cuatro con foto en la fila de abajo");
+  assert.ok(closed.includes(`Ver más eventos (${rest})`));
+  assert.match(closed, /id="mas-eventos" hidden>/);
   assert.match(closed, /data-calendar-month="2026-10"/);
 
   const open = String(ExplorerResults({ explorer: buildExplorer(views, q({ todos: "1" }), { now: NOW }) }));
-  assert.equal((open.match(/tw-card--row/g) ?? []).length, result.total, "desplegados: cada evento una vez");
-  assert.equal((open.match(/tw-card--muted/g) ?? []).length, result.past.length, "los realizados en gris");
-  assert.match(open, /Ocultar eventos realizados/);
+  assert.equal((open.match(/tw-card--row/g) ?? []).length, 2 + rest, "desplegado: el resto en tarjetas de a dos por fila");
+  assert.match(open, /id="mas-eventos">\s*<ul class="tw-grid tw-grid--min-420/);
+  assert.match(open, /Ver menos eventos/);
 });

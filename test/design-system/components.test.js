@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  AlbumCover,
   Badge,
   Banner,
   Button,
@@ -8,6 +9,9 @@ import {
   Chip,
   ChoiceCard,
   ChoiceGroup,
+  FilmStrip,
+  GallerySectionHead,
+  GallerySlider,
   Field,
   Icon,
   IconButton,
@@ -20,6 +24,8 @@ import {
   MonthCalendar,
   SegmentedControl,
   monthGrid,
+  PhotoTile,
+  PhotoViewer,
 } from "../../src/design-system/index.js";
 
 test("Button: variantes y tamaños se traducen a clases del sistema", () => {
@@ -156,4 +162,58 @@ test("Banner: con photo, kicker y actions sirve de hero compacto", () => {
   assert.match(hero, /tw-banner__kicker">.*Próximo evento/s);
   assert.match(hero, /<h2[^>]*>Evento<\/h2>/);
   assert.match(hero, /<div class="tw-cluster tw-gap-2-5 tw-banner__actions">.*Inscribirme/s);
+});
+
+test("FilmStrip: tira con el título de la primera foto, enlaces a su álbum y controles", () => {
+  const out = String(
+    FilmStrip({
+      label: "Fotos",
+      frames: [
+        { src: "/a.webp", href: "/galeria/a", title: "Evento A" },
+        { src: null, href: "/galeria/b", title: "Evento B", slot: "[ FOTO ]" },
+      ],
+    }),
+  );
+  assert.match(out, /data-tw-filmstrip="" data-interval="3200"/);
+  assert.match(out, /data-tw-filmstrip-title>Evento A</);
+  assert.match(out, /<li class="tw-filmstrip__frame is-active" data-title="Evento A">/);
+  assert.match(out, /href="\/galeria\/b" aria-label="Evento B: ver álbum"/);
+  assert.match(out, /<img class="tw-filmstrip__img" src="\/a.webp" alt="" loading="lazy"/);
+  assert.match(out, /tw-media__slot[^>]*>\[ FOTO \]/, "sin foto, placeholder del sistema");
+  assert.match(out, /aria-label="Foto anterior"[\s\S]*aria-label="Foto siguiente"/);
+});
+
+test("MediaFrame fit contain: la foto se ve completa", () => {
+  assert.match(String(MediaFrame({ src: "/x.jpg", fit: "contain" })), /class="tw-media__img tw-media__img--contain"/);
+  assert.match(String(MediaFrame({ src: "/x.jpg" })), /class="tw-media__img"/);
+});
+
+test("AlbumCover: foto con velo y título encima, marcas, descripción y Ver galería", () => {
+  const out = String(AlbumCover({ href: "/galeria/a", image: "/a.webp", title: "Connect", marks: ["7 de septiembre de 2026"], text: "", label: "Ver galería de Connect" }));
+  assert.match(out, /<a class="tw-album-card" href="\/galeria\/a" aria-label="Ver galería de Connect">/);
+  assert.match(out, /tw-album-card__media is-loading[\s\S]*<img src="\/a.webp"[^>]*data-tw-reveal>/);
+  assert.match(out, /tw-album-card__mark">7 de septiembre de 2026</);
+  assert.match(out, /tw-album-card__text is-empty">Sin descripción</);
+  assert.match(out, /Ver galería/);
+});
+
+test("GallerySlider: solo la primera foto carga de inmediato; flechas y puntos si hay varias", () => {
+  const many = String(GallerySlider({ slides: ["/1.webp", "/2.webp"], label: "Fotos", back: { href: "/galeria", label: "Galería" }, eyebrow: ["Galería", "7 de septiembre de 2026"], title: "Connect", chips: [{ icon: "image", label: "2 fotos" }] }));
+  assert.match(many, /data-tw-slider=""/);
+  assert.match(many, /<img src="\/1.webp"/);
+  assert.match(many, /<img data-src="\/2.webp"/);
+  assert.equal((many.match(/data-tw-slider-go=/g) ?? []).length, 2);
+  assert.match(many, /<h1 class="tw-gallery-hero__title">Connect<\/h1>/);
+  const one = String(GallerySlider({ slides: ["/1.webp"], label: "Fotos", back: { href: "/galeria", label: "Galería" }, eyebrow: ["Galería"], title: "Connect" }));
+  assert.doesNotMatch(one, /data-tw-slider=|tw-gallery-hero__controls/);
+  assert.match(String(GallerySlider({ slides: [], label: "Fotos", back: { href: "/", label: "Galería" }, eyebrow: ["Galería"], title: "X" })), /tw-gallery-hero--empty/);
+});
+
+test("PhotoTile, título de sección y visor", () => {
+  assert.match(String(PhotoTile({ src: "/t.webp", label: "Ver foto 1 de 9", attrs: { "data-viewer-index": 0 } })), /<button class="tw-photo-tile is-loading" type="button" aria-label="Ver foto 1 de 9" data-viewer-index="0">/);
+  assert.match(String(PhotoTile({ video: true, label: "Ver video 2 de 9" })), /tw-photo-tile--video[\s\S]*tw-photo-tile__play/);
+  assert.match(String(GallerySectionHead({ title: "Fotos y videos", meta: "9 archivos" })), /tw-gallery-section__title">Fotos y videos[\s\S]*9 archivos/);
+  const viewer = String(PhotoViewer({ id: "visor" }));
+  assert.match(viewer, /role="dialog" aria-modal="true"[^>]*hidden data-tw-viewer/);
+  assert.match(viewer, /data-tw-viewer-download[\s\S]*aria-label="Cerrar visor"/);
 });

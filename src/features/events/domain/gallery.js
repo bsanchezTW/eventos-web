@@ -11,9 +11,8 @@
  * @typedef {object} MediaItem
  * @property {string} id
  * @property {MediaType} type
- * @property {string | null} thumb  miniatura para grillas (null = placeholder del sistema)
- * @property {string | null} src    tamaño completo para el lightbox
- * @property {string | null} [large] versión grande para fondos (solo la portada del álbum)
+ * @property {string | null} thumb  miniatura reducida para grillas (null = placeholder del sistema)
+ * @property {string | null} src    versión de pantalla para el lightbox (foto reducida; el video, original)
  * @property {string} slot          texto del placeholder cuando no hay imagen
  */
 
@@ -23,14 +22,22 @@
  * @property {string} title
  * @property {string} description
  * @property {string} country       "Chile" | "Perú"
+ * @property {string | null} date   fecha del álbum (ISO), la que muestra la intranet
  * @property {MediaItem | null} cover
- * @property {MediaItem[]} previews  hasta PREVIEW_COUNT fotos (la portada primero) para el teaser
  * @property {number} photos
  * @property {number} videos
  */
 
-/** Fotos de muestra por álbum: la portada va al hero de la landing y las demás al teaser. */
-export const PREVIEW_COUNT = 5;
+/** @typedef {{ album: Pick<Album, "slug" | "title">, item: MediaItem }} ReelPhoto  foto del rollo de la portada y su evento (álbum) */
+
+/** Piezas por tanda en un álbum: la primera llega con la página y las siguientes al bajar. */
+export const ALBUM_PAGE = 20;
+
+/** Fotos del slider de cabecera de un álbum (la portada y otras al azar), como en la intranet. */
+export const ALBUM_SLIDES = 12;
+
+/** Fotos del rollo por visita (al azar entre todos los álbumes). */
+export const REEL_SIZE = 24;
 
 /** Orden de los grupos: Chile, Perú y cualquier otro después. */
 const COUNTRY_ORDER = ["Chile", "Perú"];
@@ -38,6 +45,14 @@ const COUNTRY_ORDER = ["Chile", "Perú"];
 /** "CL" → "Chile". @param {unknown} code */
 export function countryName(code) {
   return code === "PE" ? "Perú" : "Chile";
+}
+
+/** "7 de septiembre de 2026" (fecha del álbum en Chile), o "" si no hay. @param {string | null | undefined} iso */
+export function formatAlbumDate(iso) {
+  // La intranet guarda la hora en UTC sin zona ("2026-09-07T19:24:55").
+  const date = iso ? new Date(/[zZ]|[+-]\d{2}:?\d{2}$/.test(iso) ? iso : `${iso}Z`) : null;
+  if (!date || Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Santiago" });
 }
 
 /** "64 fotos · 2 videos" · "1 foto". @param {Pick<Album, "photos" | "videos">} album */

@@ -56,16 +56,30 @@ test("GET /galeria, /galeria/:slug y /webinars", async () => {
   assert.match(gallery, /Lo que pasó en cada evento/);
   assert.equal((gallery.match(/href="\/galeria\/[a-z0-9-]+"/g) ?? []).length, 3, "un enlace por álbum");
   assert.match(gallery, /id="galeria-Chile"[\s\S]*id="galeria-Perú"/, "Chile antes que Perú");
+  assert.match(gallery, /data-gallery-filter[\s\S]*data-country="Chile"[\s\S]*data-country="Perú"/, "filtro por país");
+  assert.match(gallery, /class="tw-album-card" href="\/galeria\/jornada-radwin-santiago" aria-label="Ver galería de Jornada Radwin/);
+  assert.match(gallery, /20 de agosto de 2026/, "fecha del álbum en su tarjeta");
 
   const album = await (await fetch(`${base}/galeria/jornada-radwin-santiago`)).text();
-  assert.match(album, /<h1[^>]*>Jornada Radwin: conectividad inalámbrica para minería<\/h1>/);
-  assert.match(album, /Chile · 6 fotos · 1 video/);
-  assert.equal((album.match(/data-lightbox=/g) ?? []).length, 7);
+  assert.match(album, /<h1 class="tw-gallery-hero__title">Jornada Radwin: conectividad inalámbrica para minería<\/h1>/);
+  assert.match(album, /<span>Galería<\/span><span aria-hidden="true">·<\/span><span>20 de agosto de 2026<\/span>/);
+  assert.match(album, /<span>6 fotos<\/span>[\s\S]*<span>1 video<\/span>/);
+  assert.match(album, /href="\/galeria">.*Galería<\/a>/s, "volver a la galería desde el slider");
+  assert.match(album, /Fotos y videos[\s\S]*7 archivos/);
+  assert.equal((album.match(/data-viewer-index=/g) ?? []).length, 7, "cada miniatura abre el visor");
+  assert.match(album, /data-album-mosaic[\s\S]*data-tw-viewer/, "mosaico y visor");
   assert.match(album, /<script type="application\/json" id="gallery-data">/);
+  assert.doesNotMatch(album, /data-album-more/, "7 piezas caben en la primera tanda");
   assert.equal((await fetch(`${base}/galeria/no-existe`)).status, 404);
 
+  // Las tandas siguientes (al bajar) por la API.
+  const page = await (await fetch(`${base}/api/galeria/jornada-radwin-santiago?desde=4&cantidad=2`)).json();
+  assert.deepEqual([page.data.items.length, page.data.total, page.data.items[0].id], [2, 7, "jornada-radwin-santiago-f5"]);
+  assert.equal((await fetch(`${base}/api/galeria/no-existe`)).status, 404);
+
   const landing = await (await fetch(`${base}/`)).text();
-  assert.match(landing, /href="\/galeria\/jornada-radwin-santiago" aria-label="Jornada Radwin[^"]*: ver álbum"/, "teaser con los álbumes");
+  assert.match(landing, /data-tw-filmstrip/, "rollo de fotos en la portada");
+  assert.match(landing, /href="\/galeria\/jornada-radwin-santiago" aria-label="Jornada Radwin[^"]*: ver álbum"/, "cada foto lleva a su álbum");
 
   const webinars = await fetch(`${base}/webinars`, { redirect: "manual" });
   assert.equal(webinars.status, 302, "webinars ocultos por ahora");

@@ -18,6 +18,8 @@ export const STYLESHEETS = [
   "styles/components/feedback.css",
   "styles/components/overlay.css",
   "styles/components/calendar.css",
+  "styles/components/film-strip.css",
+  "styles/components/album.css",
   "styles/layouts/site.css",
   "styles/layouts/hero.css",
   "styles/utilities.css",

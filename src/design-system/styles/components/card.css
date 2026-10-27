@@ -322,6 +322,26 @@
 .tw-media--4x5 { --tw-media-ratio: 4 / 5; }
 .tw-media--16x9 { --tw-media-ratio: 16 / 9; }
 
+/* Mientras la foto carga, el marco muestra el skeleton (la imagen lo tapa al llegar) */
+.tw-media:has(> img.tw-media__img) {
+  background: linear-gradient(90deg, var(--tw-gray-100) 25%, var(--tw-gray-75) 37%, var(--tw-gray-100) 63%);
+  background-size: 400% 100%;
+  animation: tw-shimmer 1.4s ease infinite;
+}
+
+.tw-media > .tw-skeleton {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+  border-radius: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tw-media:has(> img.tw-media__img) {
+    animation: none;
+  }
+}
+
 .tw-media__img {
   position: absolute;
   inset: 0;

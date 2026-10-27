@@ -18,7 +18,7 @@ import { eventDayKey, eventMonthKey, foldText, formatCity, monthKeyLabel, monthN
  * @property {string | null} month  "2026-10" · null = automático
  * @property {string | null} day    "2026-10-15"
  * @property {SortKey} sort
- * @property {boolean} all       desplegar los eventos realizados
+ * @property {boolean} all       desplegar toda la lista ("Ver más eventos")
  */
 
 export const SORT_OPTIONS = /** @type {const} */ ([
@@ -142,9 +142,9 @@ export function sortEvents(events, sort) {
 }
 
 /**
- * Una sola lista de eventos: sin mes elegido son todos los próximos (los realizados van aparte,
- * plegados); con mes o día del calendario, los de ese mes o día. El calendario y los chips solo
- * filtran esa lista, así ningún evento se muestra dos veces.
+ * Una sola lista de eventos: sin mes elegido, primero los próximos y después los realizados (más
+ * recientes primero); con mes o día del calendario, los de ese mes o día. El calendario y los
+ * chips solo filtran esa lista, así ningún evento se muestra dos veces.
  *
  * @typedef {object} ExplorerResult
  * @property {ExplorerQuery} query           query resuelta (`month` solo si se eligió; día validado)
@@ -153,8 +153,7 @@ export function sortEvents(events, sort) {
  * @property {{ key: string, year: number, month: number, title: string, markers: Record<number, number>, past: number[], today: number | null, prev: { key: string, label: string } | null, next: { key: string, label: string } | null } | null} calendar
  *   `key`: mes que muestra (el elegido o el del próximo evento); `past`: días cuyos eventos ya
  *   terminaron; `prev`/`next`: meses vecinos con eventos (selector del calendario)
- * @property {EventView[]} items             la lista
- * @property {EventView[]} past              realizados, solo sin mes elegido (plegados bajo la lista)
+ * @property {EventView[]} items             la lista (la página muestra las primeras y "Ver más" el resto)
  * @property {number} total
  * @property {Array<{ key: string, label: string, count: number }>} alternatives  otros meses con resultados
  * @property {{ cities: Array<{ value: string, label: string }>, modalities: Array<{ value: string, label: string }> }} facets
@@ -217,8 +216,7 @@ export function buildExplorer(events, query, { now = new Date(), timeZone = "Ame
       }
     : null;
 
-  const items = day ? inMonth.filter((event) => eventDayKey(event) === day) : monthExplicit ? inMonth : filtered.filter((e) => e.status !== "finished");
-  const past = monthExplicit ? [] : filtered.filter((e) => e.status === "finished");
+  const items = day ? inMonth.filter((event) => eventDayKey(event) === day) : monthExplicit ? inMonth : filtered;
 
   const cityMap = new Map();
   for (const event of sortEvents(listable, "fecha")) cityMap.set(citySlug(event), formatCity(event));
@@ -230,7 +228,6 @@ export function buildExplorer(events, query, { now = new Date(), timeZone = "Ame
     months,
     calendar,
     items,
-    past,
     total: filtered.length,
     alternatives: items.length || !monthExplicit ? [] : allMonths.filter((m) => m.key !== month && m.count > 0),
     facets: {

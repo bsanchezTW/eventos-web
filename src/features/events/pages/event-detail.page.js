@@ -8,6 +8,7 @@ import { RegistrationPanel, WorkshopPicker } from "../components/registration.js
 import { mailto } from "../data/landing-content.js";
 import { eventFacts, formatLongDate } from "../domain/format.js";
 import { isRegistrationOpen } from "../domain/event.js";
+import { eventImage } from "../domain/images.js";
 import { eventHref } from "../domain/links.js";
 import { locationMapUrl, mapsSearchHref } from "../domain/maps.js";
 import { renderPage } from "./shell.js";
@@ -60,7 +61,7 @@ export function renderEventDetailPage({ detail, categories, canonical }) {
           ${parent ? Button({ label: `Parte de: ${parent.title}`, variant: "accent-outline", size: "sm", icon: "corner-down-right", href: eventHref(parent.id), className: "tw-btn--medium" }) : ""}
         </div>
         ${Banner({
-          image: { src: event.image },
+          image: { src: eventImage(event.image, "hero") },
           badges: EventBadges(event, { size: "lg", onDark: true }),
           title: event.title,
           text: event.description ?? event.summary,
@@ -98,7 +99,7 @@ export function renderEventDetailPage({ detail, categories, canonical }) {
     title: `${event.title} · ${formatLongDate(event)} · Transworld`,
     description: event.summary,
     canonical,
-    image: event.image,
+    image: eventImage(event.image, "hero"),
     categories,
     activeNav: "agenda",
     main,

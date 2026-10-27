@@ -9,6 +9,7 @@
  *   API       GET  /api/eventos                   explorador (misma query que la landing)
  *             GET  /api/eventos/:id               detalle
  *             GET  /api/categorias
+ *             GET  /api/galeria/:slug              piezas de un álbum por tandas (desde, cantidad)
  *             POST /api/eventos/:id/inscripciones
  *             POST /api/suscripciones
  *   Assets    /features/events/{domain,components,client}/**.js  (módulos isomórficos para el navegador)
@@ -43,7 +44,7 @@ function toListItem(event) {
 
 /** @param {import("./domain/explorer.js").ExplorerResult} explorer */
 function serializeExplorer(explorer) {
-  return { ...explorer, items: explorer.items.map(toListItem), past: explorer.past.map(toListItem) };
+  return { ...explorer, items: explorer.items.map(toListItem) };
 }
 
 /**
@@ -73,13 +74,8 @@ export function createEventsFeature({ eventService, galleryService, registration
 
   pages.get("/", async (req, res) => {
     const query = parseExplorerQuery(/** @type {Record<string, unknown>} */ (req.query));
-    const [landing, explorer, gallery, categories] = await Promise.all([
-      eventService.getLandingData(),
-      eventService.explore(query),
-      galleryService.getLandingGallery(),
-      categoryRefs(),
-    ]);
-    res.type("html").send(String(renderLandingPage({ landing, gallery, explorer, categories, canonical: publicUrl ? `${publicUrl}/` : undefined })));
+    const [landing, explorer, reel, categories] = await Promise.all([eventService.getLandingData(), eventService.explore(query), galleryService.getReel(), categoryRefs()]);
+    res.type("html").send(String(renderLandingPage({ landing, reel, explorer, categories, canonical: publicUrl ? `${publicUrl}/` : undefined })));
   });
 
   pages.get("/galeria", async (_req, res) => {
@@ -89,7 +85,7 @@ export function createEventsFeature({ eventService, galleryService, registration
 
   pages.get("/galeria/:slug", async (req, res) => {
     const slug = String(req.params.slug);
-    const [found, categories] = await Promise.all([galleryService.getAlbum(slug), categoryRefs()]);
+    const [found, categories] = await Promise.all([galleryService.getAlbumPage(slug), categoryRefs()]);
     if (!found) return res.status(404).type("html").send(String(renderStatusPage({ status: 404, categories })));
     res.type("html").send(String(renderAlbumPage({ ...found, categories, canonical: publicUrl ? `${publicUrl}/galeria/${encodeURIComponent(slug)}` : undefined })));
   });
@@ -118,6 +114,12 @@ export function createEventsFeature({ eventService, galleryService, registration
     const detail = await eventService.getEventDetail(req.params.id);
     if (!detail) return res.status(404).json({ ok: false, code: "not_found", error: "Evento no encontrado" });
     res.json({ ok: true, data: detail });
+  });
+
+  api.get("/galeria/:slug", async (req, res) => {
+    const found = await galleryService.getAlbum(String(req.params.slug), { offset: Number(req.query.desde) || 0, limit: Number(req.query.cantidad) || undefined });
+    if (!found) return res.status(404).json({ ok: false, code: "not_found", error: "Álbum no encontrado" });
+    res.set("Cache-Control", "no-store").json({ ok: true, data: { items: found.items, total: found.total } });
   });
 
   api.get("/categorias", async (_req, res) => {

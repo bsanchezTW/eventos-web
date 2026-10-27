@@ -18,10 +18,11 @@ function placeholderItems(slug, photos, videos = 0) {
   ];
 }
 
-/** @type {Array<{ slug: string, title: string, description: string, country: string, items: MediaItem[] }>} */
+/** @type {Array<{ slug: string, title: string, description: string, country: string, date?: string, items: MediaItem[] }>} */
 export const ALBUMS = [
   {
     slug: "jornada-radwin-santiago",
+    date: "2026-08-20T15:00:00Z",
     title: "Jornada Radwin: conectividad inalámbrica para minería",
     description: "Sala llena en Santiago para ver enlaces punto a punto y punto-multipunto.",
     country: "Chile",
@@ -29,6 +30,7 @@ export const ALBUMS = [
   },
   {
     slug: "taller-certificacion-huechuraba",
+    date: "2026-07-08T14:00:00Z",
     title: "Taller práctico de certificación de redes",
     description: "Certificación de enlaces con equipos reales en la casa matriz.",
     country: "Chile",
@@ -36,6 +38,7 @@ export const ALBUMS = [
   },
   {
     slug: "encuentro-integradores-lima",
+    date: "2026-05-07T16:00:00Z",
     title: "Encuentro anual de integradores Perú",
     description: "Premiación y networking con los integradores de Lima.",
     country: "Perú",

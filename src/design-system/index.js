@@ -21,6 +21,8 @@ export { Checkbox, Field, Input, InputGroup, SearchBar, SearchField, Select } fr
 export { Alert, EmptyState, Skeleton, SuccessState, Toast, ToastRegion } from "./components/feedback.js";
 export { Modal } from "./components/overlay.js";
 export { MonthCalendar, monthGrid } from "./components/calendar.js";
+export { FilmStrip } from "./components/film-strip.js";
+export { AlbumCover, GallerySectionHead, GallerySlider, PhotoTile, PhotoTileSkeleton, PhotoViewer } from "./components/album.js";
 
 export { Document } from "./layouts/document.js";
 export { Brand, SiteFooter, SiteHeader } from "./layouts/site.js";

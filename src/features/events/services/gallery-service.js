@@ -1,55 +1,60 @@
 /**
- * Casos de uso de la galería (páginas /galeria, /galeria/:slug y teaser de la landing).
+ * Casos de uso de la galería (páginas /galeria, /galeria/:slug y rollo de fotos de la landing).
  */
-import { groupAlbumsByCountry } from "../domain/gallery.js";
+import { ALBUM_PAGE, ALBUM_SLIDES, REEL_SIZE, groupAlbumsByCountry } from "../domain/gallery.js";
+import { sample } from "./gallery-repository.js";
 
 /** @typedef {import("./gallery-repository.js").GalleryRepository} GalleryRepository */
-/** @typedef {{ album: import("../domain/gallery.js").Album, item: import("../domain/gallery.js").MediaItem }} Tile */
+/** @typedef {import("../domain/gallery.js").ReelPhoto} ReelPhoto */
 
 /**
- * @param {{ repository: GalleryRepository, logger?: Pick<Console, "warn"> }} deps
+ * @param {{ repository: GalleryRepository, logger?: Pick<Console, "warn">, random?: () => number }} deps
  */
-export function createGalleryService({ repository, logger = console }) {
+export function createGalleryService({ repository, logger = console, random = Math.random }) {
   return {
     async getGallery() {
       const albums = await repository.listAlbums();
       return { albums, groups: groupAlbumsByCountry(albums) };
     },
 
-    /** @param {string} slug */
-    async getAlbum(slug) {
-      return repository.getAlbum(slug);
+    /**
+     * Álbum por tandas: la página trae la primera y "Ver más" pide las siguientes.
+     * @param {string} slug
+     * @param {{ offset?: number, limit?: number }} [page]
+     */
+    async getAlbum(slug, { offset = 0, limit = ALBUM_PAGE } = {}) {
+      return repository.getAlbum(slug, { offset, limit: Math.min(Math.max(1, limit), 48) });
     },
 
     /**
-     * Galería para la landing: fotos de muestra (primero la portada de cada álbum, más recientes
-     * primero; si faltan, más fotos de esos álbumes) y cifras reales. Si la galería no responde,
-     * la landing sigue sin estas piezas.
-     * @param {number} [limit]
-     * @returns {Promise<{ tiles: Tile[], photos: number, albums: number }>}
+     * Página del álbum: primera tanda del mosaico y fotos del slider de cabecera. Si el slider
+     * falla, la página sigue con la portada.
+     * @param {string} slug
      */
-    async getLandingGallery(limit = 5) {
-      try {
-        const albums = await repository.listAlbums();
-        const withPreviews = albums.filter((a) => a.previews.length);
-        /** @type {Tile[]} */
-        const tiles = [];
-        for (let round = 0; tiles.length < limit && withPreviews.some((a) => a.previews[round]); round++) {
-          for (const album of withPreviews) {
-            const item = album.previews[round];
-            if (item && tiles.length < limit) tiles.push({ album, item });
-          }
-        }
-        return { tiles, photos: albums.reduce((sum, a) => sum + a.photos, 0), albums: albums.length };
-      } catch (error) {
-        logger.warn(`[galeria] Landing sin galería: ${/** @type {Error} */ (error).message}`);
-        return { tiles: [], photos: 0, albums: 0 };
-      }
+    async getAlbumPage(slug) {
+      const found = await this.getAlbum(slug);
+      if (!found) return null;
+      const slides = await repository.albumSlides(slug, ALBUM_SLIDES).catch((/** @type {Error} */ error) => {
+        logger.warn(`[galeria] Álbum ${slug} sin slider: ${error.message}`);
+        return found.album.cover ? [found.album.cover] : [];
+      });
+      return { ...found, slides };
     },
 
-    /** Fotos de muestra para el teaser (ver getLandingGallery). @param {number} [limit] */
-    async getTeaser(limit = 4) {
-      return (await this.getLandingGallery(limit)).tiles;
+    /**
+     * Rollo de fotos de la landing: `count` fotos al azar de todos los álbumes, en otro orden en
+     * cada visita (la muestra la renueva el repositorio). Si la galería no responde, la landing
+     * sigue sin el rollo.
+     * @param {number} [count]
+     * @returns {Promise<ReelPhoto[]>}
+     */
+    async getReel(count = REEL_SIZE) {
+      try {
+        return sample(await repository.samplePhotos(count), count, random);
+      } catch (error) {
+        logger.warn(`[galeria] Landing sin rollo de fotos: ${/** @type {Error} */ (error).message}`);
+        return [];
+      }
     },
   };
 }

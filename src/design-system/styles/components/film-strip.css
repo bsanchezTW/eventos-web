@@ -1,0 +1,126 @@
+/* Rollo fotográfico: tira oscura con perforaciones; la foto del centro destaca y su título va arriba */
+.tw-filmstrip {
+  --tw-filmstrip-frame: 280px;
+  --tw-filmstrip-gap: var(--tw-space-3);
+  --tw-filmstrip-x: 0px;
+}
+
+.tw-filmstrip__head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--tw-space-3);
+  margin-bottom: var(--tw-space-4);
+}
+
+.tw-filmstrip__title {
+  margin: 0;
+  text-align: center;
+  font-size: var(--tw-text-h3);
+  font-weight: var(--tw-weight-bold);
+  line-height: 1.25;
+  color: var(--tw-color-text-title);
+  overflow-wrap: anywhere;
+}
+
+.tw-filmstrip__reel {
+  position: relative;
+  overflow-x: auto;
+  padding: var(--tw-space-6) 0;
+  border-radius: var(--tw-radius-xl);
+  background: var(--tw-color-surface-darker);
+  scrollbar-width: none;
+}
+
+/* Perforaciones del rollo, arriba y abajo */
+.tw-filmstrip__reel::before,
+.tw-filmstrip__reel::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background-image: linear-gradient(90deg, var(--tw-color-bg) 0 12px, transparent 12px);
+  background-size: 26px 8px;
+  background-repeat: repeat-x;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.tw-filmstrip__reel::before {
+  top: 9px;
+}
+
+.tw-filmstrip__reel::after {
+  bottom: 9px;
+}
+
+/* Con JS la tira no se desplaza a mano: avanza sola y con las flechas */
+.tw-filmstrip.is-enhanced .tw-filmstrip__reel {
+  overflow: hidden;
+}
+
+.tw-filmstrip__track {
+  display: flex;
+  gap: var(--tw-filmstrip-gap);
+  margin: 0;
+  padding: 0 var(--tw-filmstrip-gap);
+  list-style: none;
+  transform: translateX(var(--tw-filmstrip-x));
+}
+
+.tw-filmstrip__track.is-moving {
+  transition: transform var(--tw-duration-slide) var(--tw-ease);
+}
+
+.tw-filmstrip__frame {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 var(--tw-filmstrip-frame);
+  aspect-ratio: 3 / 2;
+  overflow: hidden;
+  border-radius: var(--tw-radius-sm);
+  background: linear-gradient(90deg, var(--tw-navy-700) 25%, var(--tw-navy-600) 37%, var(--tw-navy-700) 63%);
+  background-size: 400% 100%;
+  animation: tw-shimmer 1.4s ease infinite;
+  opacity: 0.45;
+  transform: scale(0.9);
+  transition: opacity var(--tw-duration-slide) var(--tw-ease), transform var(--tw-duration-slide) var(--tw-ease);
+}
+
+.tw-filmstrip__frame.is-active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.tw-filmstrip__link {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.tw-filmstrip__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 640px) {
+  .tw-filmstrip {
+    --tw-filmstrip-frame: 200px;
+  }
+
+  .tw-filmstrip__title {
+    font-size: var(--tw-text-title-sm);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tw-filmstrip__frame {
+    animation: none;
+    transition: none;
+  }
+}

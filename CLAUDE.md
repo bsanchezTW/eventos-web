@@ -4,7 +4,7 @@ Landing de eventos Transworld: Express 5 + ES modules, sin bundler ni framework 
 
 ## Reglas para nuevas pantallas
 
-- **Toda UI se construye con el Design System** de `src/design-system` (leer `docs/design-system.md`
+- **Toda UI se construye con el Design System** de `src/design-system` (leer `../../docs/design-system.md`, fuera del repo,
   y ver `/sistema-de-diseno`). No depende del template original de Claude Design.
 - Las features no llevan CSS propio (hay un test que lo impide). Si falta un patrón visual,
   agregarlo al DS: componente + CSS con tokens + `styles/manifest.js` + export en `index.js` +

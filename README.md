@@ -54,7 +54,7 @@ No hay paso de build: el servidor concatena el CSS del DS y sirve módulos ES al
 src/
 ├── server.js                 arranque (lee .env)
 ├── app/                      composición Express, config, cabeceras de seguridad
-├── design-system/            lenguaje visual (ver docs/design-system.md)
+├── design-system/            lenguaje visual (ver /sistema-de-diseno)
 └── features/events/
     ├── domain/               modelo Event, formato, filtros del explorador, validación (isomórfico)
     ├── data/                 mocks: eventos, categorías, copys de la landing
