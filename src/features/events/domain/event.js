@@ -4,7 +4,7 @@
  * Los datos crudos (mock o API) pasan siempre por `normalizeEvent`, que valida y completa
  * valores por defecto; el resto de la app trabaja con `Event` / `EventView`.
  */
-import { embeddableMapUrl } from "./maps.js";
+import { embeddableMapUrl, googleMapsLink } from "./maps.js";
 
 /** @typedef {"upcoming" | "live" | "finished" | "cancelled"} EventStatus */
 /** @typedef {"webinar" | "presencial" | "capacitacion" | "taller"} EventModality */
@@ -56,7 +56,8 @@ import { embeddableMapUrl } from "./maps.js";
  * @property {string} [code]        Código de taller (sub-evento): se inscribe a través del evento padre
  * @property {boolean} registrationOpen  false si la organización cerró las inscripciones antes del evento
  * @property {boolean} hasTime      false si aún no hay horario confirmado (evento de día completo)
- * @property {string} [mapUrl]      Google Maps para insertar (ver domain/maps.js); se descarta si no es apto
+ * @property {string} [mapLink]     Enlace de Google Maps que pegó el staff (para "Abrir en Google Maps")
+ * @property {string} [mapUrl]      Mapa para insertar armado desde `mapLink` (ver domain/maps.js); sin él, la página usa la dirección
  * @property {string} [registrationClosesAt]  ISO 8601 con offset: después de esto no se inscribe (antes del fin)
  */
 
@@ -163,6 +164,7 @@ export function normalizeEvent(raw) {
     code: raw.code ? String(raw.code) : undefined,
     registrationOpen: raw.registrationOpen !== false,
     hasTime: raw.hasTime !== false,
+    mapLink: googleMapsLink(raw.mapUrl) ?? undefined,
     mapUrl: embeddableMapUrl(raw.mapUrl) ?? undefined,
     registrationClosesAt: isIso(raw.registrationClosesAt) ? raw.registrationClosesAt : undefined,
   };

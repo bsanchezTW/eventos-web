@@ -93,7 +93,7 @@ export function renderShowcasePage({ tokens }) {
         <div class="tw-mt-6">${Grid({
           min: 340,
           children: html`${Specimen({
-            label: "Tipografía — Montserrat",
+            label: "Tipografía — Plus Jakarta Sans",
             block: true,
             children: html`<div class="tw-stack tw-gap-3">
               ${Heading({ level: 3, variant: "h2", children: "H2 de sección · 34/800" })}
@@ -180,6 +180,17 @@ export function renderShowcasePage({ tokens }) {
           children: html`${Card({ variant: "panel", children: MonthCalendar({ year: 2026, month: 10, title: "Octubre 2026", titleId: "sg-cal", markers: { 8: 1, 15: 2, 22: 1 }, past: [8], selected: 15, nav: { prev: { label: "Ver septiembre" }, next: null }, legend: [{ label: "Próximo" }, { label: "Realizado", tone: "muted" }, { label: "Seleccionado", tone: "brand" }] }) })}
             ${Banner({ image: { src: BRAND.heroImage }, headingLevel: 2, badges: html`${Badge({ label: "Capacitación", variant: "accent" })}${Badge({ label: "Energía", variant: "on-dark" })}`, title: "Banner de detalle", text: "Imagen al 30% + gradiente diagonal navy." })}`,
         })}
+        <div class="tw-mt-5">
+          ${Banner({
+            image: { src: BRAND.heroImage },
+            photo: true,
+            headingLevel: 2,
+            kicker: "Próximo evento · Jueves 29 de octubre · 09:00–12:30",
+            title: "Hero compacto (Banner con photo y actions)",
+            text: "Edificio Transworld, Huechuraba",
+            actions: html`${Button({ label: "Inscribirme", variant: "accent", size: "lg" })}${Button({ label: "Ver todos los eventos", variant: "on-dark", size: "lg" })}`,
+          })}
+        </div>
         <div class="tw-stack tw-gap-4 tw-mt-5">
           ${CtaBand({ tone: "accent", title: "Banda CTA lime", text: "Cierre de sección con acción a la derecha.", action: Button({ label: "Solicitar contacto", variant: "light", size: "lg" }) })}
           ${CtaBand({ tone: "brand", eyebrow: "Variante navy", title: "Banda CTA navy", text: "Con resplandor lime.", action: Button({ label: "Recibir avisos", variant: "accent", size: "lg" }) })}

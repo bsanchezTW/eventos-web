@@ -176,6 +176,34 @@
   max-width: 600px;
 }
 
+.tw-banner__kicker {
+  margin-bottom: var(--tw-space-3-5);
+}
+
+.tw-banner__actions {
+  margin-top: var(--tw-space-6);
+}
+
+/* Hero compacto de la portada: la foto se ve (velo parejo, como el hero de la app) */
+.tw-banner--photo .tw-banner__img {
+  opacity: 0.55;
+}
+
+.tw-banner--photo .tw-banner__overlay {
+  background: var(--tw-gradient-hero);
+}
+
+/* En el teléfono el hero no debe llenar la pantalla: título como el de una sección */
+@media (max-width: 640px) {
+  .tw-banner--photo .tw-banner__title {
+    font-size: var(--tw-text-h3);
+  }
+
+  .tw-banner--photo .tw-banner__actions {
+    margin-top: var(--tw-space-5-5);
+  }
+}
+
 @media (max-width: 640px) {
   .tw-banner {
     padding: var(--tw-space-7) var(--tw-space-5-5);

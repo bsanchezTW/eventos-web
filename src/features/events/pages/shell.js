@@ -1,27 +1,29 @@
 /**
- * Shell del sitio de eventos (template): header con Agenda · Galería · Webinars, banda CTA
- * lime y footer en todas las vistas, más el modal de suscripción y la región de toasts.
+ * Shell del sitio de eventos (template): header con Agenda · Galería, footer en todas las vistas
+ * y la región de toasts.
+ *
+ * Ocultos por ahora (el código sigue, solo no se enlaza): la página de webinars
+ * (pages/webinars.page.js), la banda "¿Necesitas una capacitación…?" y el modal de suscripción
+ * (components/subscribe-modal.js; las suscripciones solo quedaban en memoria).
  */
-import { Button, CtaBand, Document, Section, SiteFooter, SiteHeader, ToastRegion, html } from "../../../design-system/index.js";
+import { Document, SiteFooter, SiteHeader, ToastRegion, html } from "../../../design-system/index.js";
 import { CONTACT, LANDING_CONTENT } from "../data/landing-content.js";
-import { SubscribeModal } from "../components/subscribe-modal.js";
 
 /** @typedef {import("../../../design-system/utils/html.js").Renderable} Renderable */
-/** @typedef {"agenda" | "galeria" | "webinars" | null} NavId */
+/** @typedef {"agenda" | "galeria" | null} NavId */
 
 export const NAV = [
   { id: "agenda", label: "Agenda", href: "/" },
   { id: "galeria", label: "Galería", href: "/galeria" },
-  { id: "webinars", label: "Webinars", href: "/webinars" },
 ];
 
 /**
  * @param {{
- *   title: string, description?: string, main: Renderable, scripts?: string[], categories: Array<{ id: string, name: string }>,
- *   activeNav?: NavId, canonical?: string, image?: string, showCta?: boolean
+ *   title: string, description?: string, main: Renderable, scripts?: string[], categories?: Array<{ id: string, name: string }>,
+ *   activeNav?: NavId | "webinars", canonical?: string, image?: string
  * }} props
  */
-export function renderPage({ title, description, main, scripts = ["/features/events/client/site.js"], categories, activeNav = "agenda", canonical, image, showCta = true }) {
+export function renderPage({ title, description, main, scripts = ["/features/events/client/site.js"], activeNav = "agenda", canonical, image }) {
   const content = LANDING_CONTENT;
   return Document({
     title,
@@ -34,22 +36,9 @@ export function renderPage({ title, description, main, scripts = ["/features/eve
         ${SiteHeader({
           tagline: content.tagline,
           nav: NAV.map((item) => ({ label: item.label, href: item.href, active: item.id === activeNav })),
-          cta: { label: content.headerCta, href: "#suscribirme", attrs: { "data-tw-modal-open": "suscribirme" } },
         })}
         <main class="tw-page__main" id="contenido" tabindex="-1">
           ${main}
-          ${showCta
-            ? Section({
-                labelledBy: "cta-title",
-                children: CtaBand({
-                  tone: "accent",
-                  title: content.cta.title,
-                  id: "cta-title",
-                  text: content.cta.text,
-                  action: Button({ label: content.cta.action, variant: "light", size: "lg", href: content.cta.href }),
-                }),
-              })
-            : ""}
         </main>
         ${SiteFooter({
           about: content.footer.about,
@@ -61,7 +50,6 @@ export function renderPage({ title, description, main, scripts = ["/features/eve
           legal: content.footer.legal,
         })}
       </div>
-      ${SubscribeModal({ categories, content: content.subscribe })}
       ${ToastRegion()}`,
   });
 }

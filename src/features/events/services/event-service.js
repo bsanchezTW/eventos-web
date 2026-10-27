@@ -1,22 +1,33 @@
 /**
  * Casos de uso de la agenda. Única puerta de entrada a los datos para páginas y API.
  */
-import { hasOwnImage, isRegistrationOpen, toEventViews } from "../domain/event.js";
+import { toEventViews } from "../domain/event.js";
 import { buildExplorer, isListable, sortEvents } from "../domain/explorer.js";
-import { eventMonthKey, zonedParts } from "../domain/format.js";
+import { embeddableMapUrl } from "../domain/maps.js";
 
 /** @typedef {import("../domain/event.js").EventView} EventView */
 /** @typedef {import("../domain/event.js").Category} Category */
 /** @typedef {import("../domain/explorer.js").ExplorerQuery} ExplorerQuery */
 /** @typedef {import("./event-repository.js").EventRepository} EventRepository */
+/** @typedef {import("./map-link-resolver.js").MapLinkResolver} MapLinkResolver */
 
 /**
- * @param {{ repository: EventRepository, now?: () => Date }} deps
+ * @param {{ repository: EventRepository, mapLinks?: MapLinkResolver, now?: () => Date }} deps
  */
-export function createEventService({ repository, now = () => new Date() }) {
+export function createEventService({ repository, mapLinks, now = () => new Date() }) {
   async function loadViews() {
     const [events, categories] = await Promise.all([repository.listEvents(), repository.listCategories()]);
     return { views: toEventViews(events, { now: now(), categories }), categories };
+  }
+
+  /**
+   * El enlace corto de "Compartir" no dice el lugar: se resuelve aquí para armar el mapa del detalle.
+   * @param {EventView} event
+   */
+  async function withResolvedMap(event) {
+    if (event.mapUrl || !event.mapLink || !mapLinks) return event;
+    const mapUrl = embeddableMapUrl(await mapLinks.resolve(event.mapLink));
+    return mapUrl ? { ...event, mapUrl } : event;
   }
 
   return {
@@ -30,33 +41,12 @@ export function createEventService({ repository, now = () => new Date() }) {
       return buildExplorer(views, query, { now: now() });
     },
 
-    /**
-     * Datos de la landing (excepto el explorador), solo con información real:
-     * - `nextEvent`: el destacado por comenzar o, si no hay, el próximo.
-     * - `lastFinished`: el último realizado con foto propia (el hero no usa fotos de otros eventos).
-     * - `summary`: cifras del año para las tarjetas bajo el hero (no repiten nombres ni fechas del hero).
-     */
+    /** Hero de la landing: `nextEvent`, el destacado por comenzar o, si no hay, el próximo. */
     async getLandingData() {
       const { views } = await loadViews();
-      const top = views.filter(isListable);
-      const open = sortEvents(top.filter((e) => e.status === "upcoming" || e.status === "live"), "fecha");
+      const open = sortEvents(views.filter((e) => isListable(e) && (e.status === "upcoming" || e.status === "live")), "fecha");
       const nextEvent = open.find((e) => e.featured && e.status === "upcoming") ?? open.find((e) => e.status === "upcoming") ?? open[0] ?? null;
-      const lastFinished = sortEvents(top.filter((e) => e.status === "finished"), "fecha").find(hasOwnImage) ?? null;
-
-      const year = zonedParts(now(), "America/Santiago").year;
-      const thisYear = top.filter((e) => e.status !== "cancelled" && zonedParts(e.startsAt, e.timezone).year === year);
-      const summary = {
-        year,
-        total: thisYear.length,
-        finished: thisYear.filter((e) => e.status === "finished").length,
-        countries: [...new Set(thisYear.map((e) => e.location.country).filter(Boolean))],
-        openRegistrations: open.filter(isRegistrationOpen).length,
-      };
-
-      // Meses con inscripciones abiertas (eventos por comenzar), para el kicker del hero.
-      const openMonths = [...new Set(open.filter((e) => e.status === "upcoming").map(eventMonthKey))].sort();
-
-      return { nextEvent, lastFinished, summary, openMonths };
+      return { nextEvent };
     },
 
     /** Webinars: próximos (por fecha) y grabaciones (más recientes primero). */
@@ -74,8 +64,9 @@ export function createEventService({ repository, now = () => new Date() }) {
      */
     async getEventDetail(id) {
       const { views } = await loadViews();
-      const event = views.find((e) => e.id === id);
-      if (!event) return null;
+      const found = views.find((e) => e.id === id);
+      if (!found) return null;
+      const event = await withResolvedMap(found);
       const parent = event.parentId ? (views.find((e) => e.id === event.parentId) ?? null) : null;
       const children = sortEvents(views.filter((e) => e.parentId === event.id), "fecha");
       return { event, parent, children };

@@ -117,7 +117,7 @@ Breakpoints de referencia: `640px` (móvil), `768px`, `960px` (nav colapsa), `10
 
 ## Qué viene del template y qué se adaptó
 
-**Directo del template** (valores exactos): paleta navy/lime, Montserrat + IBM Plex Mono y la
+**Directo del template** (valores exactos): paleta navy/lime (la de la app RegisPro), Plus Jakarta Sans + IBM Plex Mono y la
 tabla de roles tipográficos, radios, sombras, contenedor 1240/28, keyframe `tw-up`, crossfade
 del hero (.9s, 6.5s por slide, dots de 38px), header sticky con blur, grillas auto-fit,
 componentes (botones, píldoras, chips, badges, tarjeta de evento con bloque de fecha, stat card,

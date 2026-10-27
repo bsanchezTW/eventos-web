@@ -13,9 +13,9 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dest = path.join(root, "src/design-system/assets/fonts");
 
 const FILES = [
-  ["@fontsource-variable/montserrat/files/montserrat-latin-wght-normal.woff2", "montserrat-latin-wght-normal.woff2"],
-  ["@fontsource-variable/montserrat/files/montserrat-latin-ext-wght-normal.woff2", "montserrat-latin-ext-wght-normal.woff2"],
-  ["@fontsource-variable/montserrat/LICENSE", "LICENSE-montserrat.txt"],
+  ["@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-wght-normal.woff2", "plus-jakarta-sans-latin-wght-normal.woff2"],
+  ["@fontsource-variable/plus-jakarta-sans/files/plus-jakarta-sans-latin-ext-wght-normal.woff2", "plus-jakarta-sans-latin-ext-wght-normal.woff2"],
+  ["@fontsource-variable/plus-jakarta-sans/LICENSE", "LICENSE-plus-jakarta-sans.txt"],
   ["@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2", "ibm-plex-mono-latin-400-normal.woff2"],
   ["@fontsource/ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2", "ibm-plex-mono-latin-500-normal.woff2"],
   ["@fontsource/ibm-plex-mono/LICENSE", "LICENSE-ibm-plex-mono.txt"],

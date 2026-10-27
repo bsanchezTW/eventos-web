@@ -12,7 +12,7 @@ import {
   metaLine,
   seatAvailability,
 } from "../../src/features/events/domain/format.js";
-import { embeddableMapUrl, mapsSearchHref } from "../../src/features/events/domain/maps.js";
+import { embeddableMapUrl, googleMapsLink, isShortMapsLink, locationMapUrl, mapsSearchHref } from "../../src/features/events/domain/maps.js";
 import {
   defaultPhoneCountry,
   findOverlaps,
@@ -195,7 +195,7 @@ test("validateSubscription filtra categorías desconocidas", () => {
   assert.deepEqual(value.categories, ["cctv"]);
 });
 
-test("mapa: mismos casos que urlMapaEmbebible en nexus-app", () => {
+test("mapa: el enlace de Insertar un mapa se usa tal cual", () => {
   const embed = "https://www.google.com/maps/embed?pb=!1m18!2sHotel";
   assert.equal(embeddableMapUrl(embed), embed);
   assert.equal(
@@ -203,11 +203,50 @@ test("mapa: mismos casos que urlMapaEmbebible en nexus-app", () => {
     "https://www.google.com/maps/embed?pb=!1m1&x=1",
   );
   assert.ok(embeddableMapUrl("https://maps.google.com/maps?q=Vitacura&output=embed"));
-  assert.equal(embeddableMapUrl("https://maps.app.goo.gl/abc123"), null);
-  assert.equal(embeddableMapUrl("http://www.google.com/maps/embed?pb=1"), null);
+  assert.equal(embeddableMapUrl("http://www.google.com/maps/embed?pb=1"), "https://www.google.com/maps/embed?pb=1", "http se pasa a https");
   assert.equal(embeddableMapUrl("https://evil.example/maps/embed?pb=1"), null);
   assert.equal(embeddableMapUrl("  "), null);
-  assert.equal(normalizeEvent({ ...base, mapUrl: "https://maps.app.goo.gl/x" }).mapUrl, undefined, "un enlace no insertable se descarta");
+});
+
+test("mapa: se arma desde el enlace que da Compartir o la barra del navegador", () => {
+  const embed = (/** @type {Record<string, string>} */ params) => `https://maps.google.com/maps?${new URLSearchParams({ ...params, z: "16", output: "embed" })}`;
+  assert.equal(
+    embeddableMapUrl("https://www.google.com/maps/place/Casa+Piedra/@-33.3912,-70.5975,17z/data=!3m1!4b1!4m6!3m5!1s0x0:0x1!8m2!3d-33.3915!4d-70.5969!16s"),
+    embed({ q: "Casa Piedra", ll: "-33.3915,-70.5969" }),
+    "pin exacto del lugar con su nombre",
+  );
+  assert.equal(embeddableMapUrl("https://www.google.cl/maps/@-33.4,-70.6,15z"), embed({ q: "-33.4,-70.6" }), "solo el centro del mapa");
+  assert.equal(embeddableMapUrl("https://www.google.com/maps/search/Hotel+Intercontinental+Santiago"), embed({ q: "Hotel Intercontinental Santiago" }));
+  assert.equal(embeddableMapUrl("https://maps.google.com/?q=-12.09,-77.02"), embed({ q: "-12.09,-77.02" }));
+  assert.equal(embeddableMapUrl("https://www.google.com/maps?q=Av.+Vitacura+2885"), embed({ q: "Av. Vitacura 2885" }));
+  assert.equal(embeddableMapUrl("https://maps.app.goo.gl/abc123"), null, "el corto lo resuelve el servidor");
+  assert.equal(embeddableMapUrl("https://www.google.com/search?q=casa+piedra"), null, "una búsqueda de Google no es un mapa");
+});
+
+test("mapa: enlace limpio desde lo que copia el teléfono", () => {
+  assert.equal(googleMapsLink("Casa Piedra\nhttps://maps.app.goo.gl/AbC123?g_st=iw"), "https://maps.app.goo.gl/AbC123?g_st=iw");
+  assert.equal(googleMapsLink("https://goo.gl/maps/xyz"), "https://goo.gl/maps/xyz");
+  assert.equal(googleMapsLink("https://goo.gl/otra-cosa"), null);
+  assert.equal(googleMapsLink("Calle Nueva 1890"), null);
+  assert.ok(isShortMapsLink("https://maps.app.goo.gl/AbC123"));
+  assert.ok(!isShortMapsLink("https://www.google.com/maps/place/X"));
+
+  const short = normalizeEvent({ ...base, mapUrl: "https://maps.app.goo.gl/x" });
+  assert.equal(short.mapLink, "https://maps.app.goo.gl/x");
+  assert.equal(short.mapUrl, undefined, "sin resolver todavía no hay mapa insertable");
+  assert.equal(normalizeEvent({ ...base, mapUrl: "https://evil.example/x" }).mapLink, undefined);
+});
+
+test("mapa: sin enlace se arma con la dirección", () => {
+  assert.equal(
+    locationMapUrl({ venue: "Hotel Intercontinental", address: "Av. Vitacura 2885", country: "Chile" }),
+    "https://maps.google.com/maps?q=Hotel+Intercontinental%2C+Av.+Vitacura+2885%2C+Chile&z=16&output=embed",
+  );
+  assert.equal(locationMapUrl({ online: true, venue: "Zoom" }), null);
+  assert.equal(locationMapUrl({ city: "Santiago" }), null, "solo la ciudad no ubica el evento");
+});
+
+test("mapa: el texto de búsqueda de Abrir en Google Maps", () => {
   assert.equal(
     mapsSearchHref({ venue: "Hotel Intercontinental", address: "Av. Vitacura 2885, Las Condes", country: "Chile" }),
     "https://www.google.com/maps/search/?api=1&query=Hotel%20Intercontinental%2C%20Av.%20Vitacura%202885%2C%20Las%20Condes%2C%20Chile",

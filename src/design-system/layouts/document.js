@@ -10,7 +10,7 @@ import { attrs, html, raw } from "../utils/html.js";
  *   bodyClass?: string, scripts?: string[], canonical?: string, image?: string, themeColor?: string
  * }} props
  */
-export function Document({ title, description, lang = "es", body, head, bodyClass, scripts = [], canonical, image, themeColor = "#293f68" }) {
+export function Document({ title, description, lang = "es", body, head, bodyClass, scripts = [], canonical, image, themeColor = "#203e6d" }) {
   return html`${raw("<!doctype html>")}
 <html lang="${lang}">
 <head>
@@ -26,7 +26,7 @@ export function Document({ title, description, lang = "es", body, head, bodyClas
   ${image ? html`<meta property="og:image" content="${image}">` : ""}
   <link rel="icon" type="image/png" sizes="32x32" href="${dsAsset("brand/favicon-32.png")}">
   <link rel="apple-touch-icon" href="${dsAsset("brand/apple-touch-icon.png")}">
-  <link rel="preload" href="${dsAsset("fonts/montserrat-latin-wght-normal.woff2")}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="${dsAsset("fonts/plus-jakarta-sans-latin-wght-normal.woff2")}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="${DS_MOUNT}/tw.css">
   ${head ?? ""}
 </head>

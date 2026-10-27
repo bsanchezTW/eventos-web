@@ -5,7 +5,7 @@
  *             GET  /eventos/:id                   detalle
  *             GET  /galeria                       álbumes de la galería (intranet)
  *             GET  /galeria/:slug                 fotos y videos de un álbum
- *             GET  /webinars                      webinars en vivo y grabados
+ *             GET  /webinars                      oculta por ahora: redirige a /
  *   API       GET  /api/eventos                   explorador (misma query que la landing)
  *             GET  /api/eventos/:id               detalle
  *             GET  /api/categorias
@@ -31,6 +31,8 @@ import { DomainError } from "./services/registration-service.js";
 /** @typedef {import("./domain/event.js").EventView} EventView */
 
 const FEATURE_ROOT = path.dirname(fileURLToPath(import.meta.url));
+/** Página /webinars (oculta mientras no se usen; ver pages/shell.js). */
+const WEBINARS_PUBLISHED = false;
 const CLIENT_DIRS = ["domain", "components", "client"];
 
 /** Versión liviana para listados (sin programa ni descripción larga). @param {EventView} event */
@@ -41,7 +43,7 @@ function toListItem(event) {
 
 /** @param {import("./domain/explorer.js").ExplorerResult} explorer */
 function serializeExplorer(explorer) {
-  return { ...explorer, monthItems: explorer.monthItems.map(toListItem), seasonItems: explorer.seasonItems.map(toListItem) };
+  return { ...explorer, items: explorer.items.map(toListItem), past: explorer.past.map(toListItem) };
 }
 
 /**
@@ -93,6 +95,8 @@ export function createEventsFeature({ eventService, galleryService, registration
   });
 
   pages.get("/webinars", async (_req, res) => {
+    // Por ahora no hay webinars: la página no se enlaza y su dirección lleva a la agenda.
+    if (!WEBINARS_PUBLISHED) return res.redirect(302, "/");
     const [webinars, categories] = await Promise.all([eventService.getWebinars(), categoryRefs()]);
     res.type("html").send(String(renderWebinarsPage({ webinars, categories })));
   });

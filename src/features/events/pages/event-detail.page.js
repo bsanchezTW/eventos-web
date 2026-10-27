@@ -9,22 +9,25 @@ import { mailto } from "../data/landing-content.js";
 import { eventFacts, formatLongDate } from "../domain/format.js";
 import { isRegistrationOpen } from "../domain/event.js";
 import { eventHref } from "../domain/links.js";
-import { mapsSearchHref } from "../domain/maps.js";
+import { locationMapUrl, mapsSearchHref } from "../domain/maps.js";
 import { renderPage } from "./shell.js";
 
 /** @typedef {import("../domain/event.js").EventView} EventView */
 
 /**
- * "Cómo llegar": mapa cargado en la app (si hay) + dirección + enlace a Google Maps. Nada si es online.
+ * "Cómo llegar": mapa del enlace que pegó el staff en la app o, sin enlace, el de la dirección;
+ * más la dirección y "Abrir en Google Maps" (al mismo lugar del enlace, si hay). Nada si es online.
  * @param {EventView} event
  */
 function locationBody(event) {
   const { online, venue, address, city } = event.location;
-  const searchHref = mapsSearchHref(event.location);
-  if (online || (!event.mapUrl && !searchHref)) return null;
+  if (online) return null;
+  const mapUrl = event.mapUrl ?? locationMapUrl(event.location);
+  const searchHref = event.mapLink && !event.mapLink.includes("output=embed") && !event.mapLink.includes("/maps/embed") ? event.mapLink : mapsSearchHref(event.location);
+  if (!mapUrl && !searchHref) return null;
   const place = [venue, address ?? city].filter(Boolean).join(" · ");
   return html`<div class="tw-stack tw-gap-4">
-    ${event.mapUrl ? MapFrame({ src: event.mapUrl, title: `Mapa: ${venue ?? event.title}` }) : ""}
+    ${mapUrl ? MapFrame({ src: mapUrl, title: `Mapa: ${venue ?? event.title}` }) : ""}
     <div class="tw-cluster tw-cluster--between tw-gap-3">
       ${place ? Text({ variant: "meta", children: place }) : ""}
       ${searchHref ? Button({ label: "Abrir en Google Maps", variant: "outline", size: "sm", icon: "pin", href: searchHref, className: "tw-btn--medium", attrs: { target: "_blank", rel: "noopener" } }) : ""}

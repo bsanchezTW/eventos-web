@@ -29,16 +29,17 @@ test("GET / renderiza la landing completa con cabeceras de seguridad", async () 
   assert.match(res.headers.get("content-security-policy") ?? "", /style-src 'self'/);
   assert.equal(res.headers.get("x-content-type-options"), "nosniff");
   const body = await res.text();
-  // Orden: hero → stats → calendario → galería → CTA (sin "formas de participar")
-  const order = ["tw-hero", "tw-stat-bar", "id=\"calendario\"", "id=\"galeria\"", "tw-cta-band--accent", "tw-footer"].map((m) => body.indexOf(m));
+  // Orden: hero compacto → lista de eventos → galería → footer; sin carrusel, cifras ni banda CTA
+  const order = ["tw-banner--photo", "id=\"calendario\"", "id=\"galeria\"", "tw-footer"].map((m) => body.indexOf(m));
   assert.ok(order.every((pos, i) => pos > 0 && (i === 0 || pos > order[i - 1])), `orden de secciones: ${order}`);
-  assert.match(body, /id="suscribirme"/);
+  assert.doesNotMatch(body, /class="tw-hero\b|tw-stat-bar|tw-cta-band/);
+  assert.doesNotMatch(body, /id="suscribirme"|\/webinars|capacitación para tu equipo/i, "webinars, capacitaciones y suscripción ocultos");
   assert.doesNotMatch(body, /tw-searchbar|data-explorer-form/, "el template no tiene buscador ni barra de filtros");
-  for (const [label, href] of [["Agenda", "/"], ["Galería", "/galeria"], ["Webinars", "/webinars"]]) {
+  for (const [label, href] of [["Agenda", "/"], ["Galería", "/galeria"]]) {
     assert.match(body, new RegExp(`class="tw-pill" href="${href}"[^>]*>${label}<`));
   }
-  assert.match(body, />Inscribirme<\/span>/);
-  assert.match(body, /<h1 class="tw-sr-only">Agenda de eventos Transworld<\/h1>/);
+  assert.match(body, /Próximo evento · /);
+  assert.match(body, /<h1 class="tw-sr-only" id="agenda-title">Agenda de eventos Transworld<\/h1>/);
   assert.equal((body.match(/<h1\b/g) ?? []).length, 1, "un solo h1 por página");
   assert.match(body, /<link rel="stylesheet" href="\/design-system\/tw.css">/);
 });
@@ -66,11 +67,9 @@ test("GET /galeria, /galeria/:slug y /webinars", async () => {
   const landing = await (await fetch(`${base}/`)).text();
   assert.match(landing, /href="\/galeria\/jornada-radwin-santiago" aria-label="Jornada Radwin[^"]*: ver álbum"/, "teaser con los álbumes");
 
-  const webinars = await (await fetch(`${base}/webinars`)).text();
-  assert.match(webinars, /Sesiones técnicas desde donde estés/);
-  assert.match(webinars, /EN VIVO · 8 OCT/);
-  assert.match(webinars, /id="grabaciones"/);
-  assert.match(webinars, /Ver grabación/);
+  const webinars = await fetch(`${base}/webinars`, { redirect: "manual" });
+  assert.equal(webinars.status, 302, "webinars ocultos por ahora");
+  assert.equal(webinars.headers.get("location"), "/");
 });
 
 test("GET /eventos/:id y 404 con el lenguaje visual del sistema", async () => {
@@ -100,7 +99,7 @@ test("API: explorador, detalle, inscripción y suscripción", async () => {
   const list = await (await fetch(`${base}/api/eventos?sede=lima`)).json();
   assert.equal(list.ok, true);
   assert.equal(list.data.total, 2);
-  assert.equal(list.data.seasonItems[0].program, undefined, "los listados van sin programa");
+  assert.equal(list.data.items[0].program, undefined, "los listados van sin programa");
 
   const post = (/** @type {string} */ url, /** @type {unknown} */ body) =>
     fetch(`${base}${url}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
@@ -157,7 +156,7 @@ test("CSP: imágenes del Storage de Supabase solo con la fuente supabase", async
 test("assets: el DS y los módulos de cliente se sirven; el código de servidor no", async () => {
   assert.equal((await fetch(`${base}/design-system/tw.css`)).status, 200);
   assert.equal((await fetch(`${base}/design-system/index.js`)).status, 200);
-  assert.equal((await fetch(`${base}/design-system/assets/fonts/montserrat-latin-wght-normal.woff2`)).status, 200);
+  assert.equal((await fetch(`${base}/design-system/assets/fonts/plus-jakarta-sans-latin-wght-normal.woff2`)).status, 200);
   assert.equal((await fetch(`${base}/features/events/components/event-card.js`)).status, 200);
   assert.equal((await fetch(`${base}/design-system/server.js`)).status, 404);
   assert.equal((await fetch(`${base}/features/events/services/event-service.js`)).status, 404);
@@ -191,7 +190,7 @@ test("guía viva del Design System en desarrollo; oculta en producción", async 
   assert.equal(res.status, 200);
   const body = await res.text();
   assert.match(body, /navy-600/);
-  assert.match(body, /#293f68/);
+  assert.match(body, /#203e6d/);
   assert.equal((await fetch(`${base}/design-system/tokens/read-tokens.js`)).status, 404);
 
   const prod = loadConfig({ NODE_ENV: "production" });

@@ -2,18 +2,11 @@
  * Secciones del sitio de eventos (template) construidas con el Design System.
  * La galería vive en components/gallery.js.
  */
-import { Badge, Button, Card, Grid, Heading, StatCard, html } from "../../../design-system/index.js";
+import { Badge, Button, Card, Heading, html } from "../../../design-system/index.js";
 import { dateBadge, durationMinutes, zonedParts } from "../domain/format.js";
 import { eventHref } from "../domain/links.js";
 
 /** @typedef {import("../domain/event.js").EventView} EventView */
-
-/** @param {{ stats: Array<{ label: string, value: string }> }} props */
-export function StatBar({ stats }) {
-  return html`<div class="tw-container">
-    ${Grid({ min: 220, gap: "3-5", as: "ul", className: "tw-stat-bar", attrs: { "aria-label": "Resumen de la agenda" }, children: stats.map((s) => StatCard({ ...s, as: "li" })) })}
-  </div>`;
-}
 
 /**
  * Fila de webinar (template): estado + línea, título, meta y acción.

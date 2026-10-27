@@ -16,6 +16,7 @@ import { createEventRepository, RepositoryError } from "../features/events/servi
 import { createEventService } from "../features/events/services/event-service.js";
 import { createIntranetGalleryRepository, createMockGalleryRepository } from "../features/events/services/gallery-repository.js";
 import { createGalleryService } from "../features/events/services/gallery-service.js";
+import { createMapLinkResolver } from "../features/events/services/map-link-resolver.js";
 import { createMemoryRegistrationGateway, createSupabaseRegistrationGateway } from "../features/events/services/registration-gateway.js";
 import { createRegistrationService } from "../features/events/services/registration-service.js";
 import { createSupabaseRpc } from "../features/events/services/supabase-rpc.js";
@@ -30,17 +31,18 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
  *   repository?: import("../features/events/services/event-repository.js").EventRepository,
  *   gateway?: import("../features/events/services/registration-gateway.js").RegistrationGateway,
  *   galleryRepository?: import("../features/events/services/gallery-repository.js").GalleryRepository,
+ *   mapLinks?: import("../features/events/services/map-link-resolver.js").MapLinkResolver,
  *   now?: () => Date,
  *   logger?: Pick<Console, "error" | "warn">
  * }} options
  */
-export function createApp({ config, repository, gateway, galleryRepository, now, logger = console }) {
+export function createApp({ config, repository, gateway, galleryRepository, mapLinks, now, logger = console }) {
   const { url, key } = config.supabase;
   const rpc = config.events.source === "supabase" && url && key ? createSupabaseRpc({ url, key }) : null;
   const eventRepository =
     repository ??
     createEventRepository({ source: config.events.source, apiUrl: config.events.apiUrl, latencyMs: config.events.mockLatencyMs, rpc, cacheTtlMs: config.events.cacheTtlMs });
-  const eventService = createEventService({ repository: eventRepository, now });
+  const eventService = createEventService({ repository: eventRepository, mapLinks: mapLinks ?? createMapLinkResolver({ logger }), now });
   const registrationService = createRegistrationService({
     eventService,
     gateway: gateway ?? (rpc ? createSupabaseRegistrationGateway({ rpc }) : createMemoryRegistrationGateway({ eventService })),

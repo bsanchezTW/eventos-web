@@ -65,17 +65,21 @@ export function HeroCarousel({ label, title, slides, search, interval = 6500, id
 }
 
 /**
- * Banner navy redondeado con imagen al 30% y gradiente diagonal (cabecera de detalle).
- * @param {{ image?: { src: string }, badges?: Renderable, title: Renderable, text?: Renderable, headingLevel?: 1 | 2 }} props
+ * Banner navy redondeado con imagen y gradiente diagonal: cabecera de detalle y, con `actions`,
+ * hero compacto de la portada (próximo evento con su botón, como el hero de evento de la app).
+ * `kicker` va sobre el título (fecha y lugar); `photo` muestra la imagen más viva (al 55%).
+ * @param {{ image?: { src: string }, badges?: Renderable, kicker?: Renderable, title: Renderable, text?: Renderable, actions?: Renderable, photo?: boolean, headingLevel?: 1 | 2 }} props
  */
-export function Banner({ image, badges, title, text, headingLevel = 1 }) {
-  return html`<div class="tw-banner tw-on-dark">
-    ${image ? html`<img class="tw-banner__img" src="${image.src}" alt="" decoding="async">` : ""}
+export function Banner({ image, badges, kicker, title, text, actions, photo = false, headingLevel = 1 }) {
+  return html`<div class="${cx("tw-banner tw-on-dark", photo && "tw-banner--photo")}">
+    ${image ? html`<img class="tw-banner__img" src="${image.src}" alt="" decoding="async"${attrs({ fetchpriority: photo ? "high" : null })}>` : ""}
     <div class="tw-banner__overlay" aria-hidden="true"></div>
     <div class="tw-banner__content">
       ${badges ? html`<div class="tw-cluster tw-gap-2 tw-banner__badges">${badges}</div>` : ""}
+      ${kicker ? Kicker({ children: kicker, className: "tw-banner__kicker" }) : ""}
       ${Heading({ level: headingLevel, variant: "h1", tone: "on-dark", children: title, className: "tw-banner__title" })}
       ${text ? Text({ variant: "lead-sm", tone: "on-dark", children: text, className: "tw-banner__text" }) : ""}
+      ${actions ? html`<div class="tw-cluster tw-gap-2-5 tw-banner__actions">${actions}</div>` : ""}
     </div>
   </div>`;
 }

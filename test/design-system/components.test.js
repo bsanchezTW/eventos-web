@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   Badge,
+  Banner,
   Button,
   Card,
   Chip,
@@ -144,4 +145,15 @@ test("Card muted marca lo que ya ocurrió", () => {
 test("Badge truncate: una línea con el texto completo en title", () => {
   const out = String(Badge({ label: "Lanzamiento de la línea de video", truncate: true, attrs: { title: "Lanzamiento de la línea de video" } }));
   assert.equal(out, '<span class="tw-badge tw-badge--neutral tw-badge--truncate" title="Lanzamiento de la línea de video"><span class="tw-badge__text">Lanzamiento de la línea de video</span></span>');
+});
+
+test("Banner: con photo, kicker y actions sirve de hero compacto", () => {
+  const plain = String(Banner({ title: "Detalle" }));
+  assert.doesNotMatch(plain, /tw-banner--photo|tw-banner__actions|tw-kicker/);
+  const hero = String(Banner({ image: { src: "/x.jpg" }, photo: true, headingLevel: 2, kicker: "Próximo evento", title: "Evento", actions: Button({ label: "Inscribirme" }) }));
+  assert.match(hero, /class="tw-banner tw-on-dark tw-banner--photo"/);
+  assert.match(hero, /<img class="tw-banner__img" src="\/x.jpg" alt="" decoding="async" fetchpriority="high">/);
+  assert.match(hero, /tw-banner__kicker">.*Próximo evento/s);
+  assert.match(hero, /<h2[^>]*>Evento<\/h2>/);
+  assert.match(hero, /<div class="tw-cluster tw-gap-2-5 tw-banner__actions">.*Inscribirme/s);
 });

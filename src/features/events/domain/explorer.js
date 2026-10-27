@@ -18,7 +18,7 @@ import { eventDayKey, eventMonthKey, foldText, formatCity, monthKeyLabel, monthN
  * @property {string | null} month  "2026-10" · null = automático
  * @property {string | null} day    "2026-10-15"
  * @property {SortKey} sort
- * @property {boolean} all       mostrar la temporada completa
+ * @property {boolean} all       desplegar los eventos realizados
  */
 
 export const SORT_OPTIONS = /** @type {const} */ ([
@@ -142,14 +142,19 @@ export function sortEvents(events, sort) {
 }
 
 /**
+ * Una sola lista de eventos: sin mes elegido son todos los próximos (los realizados van aparte,
+ * plegados); con mes o día del calendario, los de ese mes o día. El calendario y los chips solo
+ * filtran esa lista, así ningún evento se muestra dos veces.
+ *
  * @typedef {object} ExplorerResult
- * @property {ExplorerQuery} query           query resuelta (mes efectivo, día validado)
+ * @property {ExplorerQuery} query           query resuelta (`month` solo si se eligió; día validado)
  * @property {boolean} monthExplicit
- * @property {Array<{ key: string, label: string, count: number }>} months
+ * @property {Array<{ key: string, label: string, count: number }>} months  pestañas: meses desde el actual
  * @property {{ key: string, year: number, month: number, title: string, markers: Record<number, number>, past: number[], today: number | null, prev: { key: string, label: string } | null, next: { key: string, label: string } | null } | null} calendar
- *   `past`: días cuyos eventos ya terminaron; `prev`/`next`: meses vecinos con eventos (selector del calendario)
- * @property {EventView[]} monthItems        eventos del mes (y del día, si hay día)
- * @property {EventView[]} seasonItems       todos los meses, con filtros
+ *   `key`: mes que muestra (el elegido o el del próximo evento); `past`: días cuyos eventos ya
+ *   terminaron; `prev`/`next`: meses vecinos con eventos (selector del calendario)
+ * @property {EventView[]} items             la lista
+ * @property {EventView[]} past              realizados, solo sin mes elegido (plegados bajo la lista)
  * @property {number} total
  * @property {Array<{ key: string, label: string, count: number }>} alternatives  otros meses con resultados
  * @property {{ cities: Array<{ value: string, label: string }>, modalities: Array<{ value: string, label: string }> }} facets
@@ -165,11 +170,15 @@ export function buildExplorer(events, query, { now = new Date(), timeZone = "Ame
   const listable = events.filter(isListable);
   const filtered = sortEvents(applyFilters(events, query), query.sort);
 
-  // Pestañas de mes estables: salen de todo lo listable, el conteo refleja los filtros.
+  // Meses estables: salen de todo lo listable, el conteo refleja los filtros. Las pestañas parten
+  // en el mes actual (lo anterior se recorre con las flechas del calendario).
+  const today = zonedParts(now, timeZone);
+  const todayKey = `${today.year}-${String(today.month).padStart(2, "0")}`;
   const monthKeys = [...new Set(sortEvents(listable, "fecha").map(eventMonthKey))].sort();
   const countByMonth = new Map();
   for (const event of filtered) countByMonth.set(eventMonthKey(event), (countByMonth.get(eventMonthKey(event)) ?? 0) + 1);
-  const months = monthKeys.map((key) => ({ key, label: monthName(Number(key.slice(5))), count: countByMonth.get(key) ?? 0 }));
+  const allMonths = monthKeys.map((key) => ({ key, label: monthName(Number(key.slice(5))), count: countByMonth.get(key) ?? 0 }));
+  const months = allMonths.filter((m) => m.key >= todayKey);
 
   // Mes automático: el del próximo evento por comenzar (un evento "en curso" que empezó
   // el mes anterior no debería abrir la agenda en un mes que está terminando). Sin próximos,
@@ -178,7 +187,7 @@ export function buildExplorer(events, query, { now = new Date(), timeZone = "Ame
   const nextUpcoming = filtered.filter((e) => e.status === "upcoming").sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt))[0];
   const month = monthExplicit
     ? /** @type {string} */ (query.month)
-    : ((nextUpcoming && eventMonthKey(nextUpcoming)) ?? months.findLast((m) => m.count > 0)?.key ?? monthKeys.at(-1) ?? null);
+    : ((nextUpcoming && eventMonthKey(nextUpcoming)) ?? allMonths.findLast((m) => m.count > 0)?.key ?? monthKeys.at(-1) ?? null);
   const inMonth = filtered.filter((event) => eventMonthKey(event) === month);
   const day = query.day && month && query.day.startsWith(month) && inMonth.some((e) => eventDayKey(e) === query.day) ? query.day : null;
 
@@ -194,7 +203,6 @@ export function buildExplorer(events, query, { now = new Date(), timeZone = "Ame
   const monthIndex = month ? monthKeys.indexOf(month) : -1;
   const neighbor = (/** @type {number} */ i) => (i >= 0 && i < monthKeys.length ? { key: monthKeys[i], label: monthKeyLabel(monthKeys[i]) } : null);
 
-  const today = zonedParts(now, timeZone);
   const calendar = month
     ? {
         key: month,
@@ -209,21 +217,22 @@ export function buildExplorer(events, query, { now = new Date(), timeZone = "Ame
       }
     : null;
 
-  const monthItems = day ? inMonth.filter((event) => eventDayKey(event) === day) : inMonth;
+  const items = day ? inMonth.filter((event) => eventDayKey(event) === day) : monthExplicit ? inMonth : filtered.filter((e) => e.status !== "finished");
+  const past = monthExplicit ? [] : filtered.filter((e) => e.status === "finished");
 
   const cityMap = new Map();
   for (const event of sortEvents(listable, "fecha")) cityMap.set(citySlug(event), formatCity(event));
   const usedModalities = new Set(listable.map((e) => e.modality));
 
   return {
-    query: { ...query, month, day },
+    query: { ...query, month: monthExplicit ? month : null, day },
     monthExplicit,
     months,
     calendar,
-    monthItems,
-    seasonItems: filtered,
+    items,
+    past,
     total: filtered.length,
-    alternatives: monthItems.length ? [] : months.filter((m) => m.key !== month && m.count > 0),
+    alternatives: items.length || !monthExplicit ? [] : allMonths.filter((m) => m.key !== month && m.count > 0),
     facets: {
       cities: [...cityMap].map(([value, label]) => ({ value, label })).sort((a, b) => (a.value === "online" ? 1 : b.value === "online" ? -1 : a.label.localeCompare(b.label, "es"))),
       modalities: Object.entries(MODALITIES)

@@ -15,22 +15,21 @@ export const mailto = (subject) => `mailto:${CONTACT.email}?subject=${encodeURIC
 
 export const LANDING_CONTENT = {
   meta: {
-    title: "Agenda de eventos Transworld · Capacitaciones, demos y webinars",
+    title: "Agenda de eventos Transworld",
     description:
-      "Agenda oficial de eventos Transworld para Chile y Perú: capacitaciones con certificado, demos en terreno y webinars técnicos. Reserva tu cupo en un minuto.",
+      "Agenda oficial de eventos Transworld para Chile y Perú. Elige una fecha, inscríbete en un minuto y recibe tu código QR de acceso por correo.",
   },
   tagline: "Agenda eventos",
   heroTitle: "Agenda de eventos Transworld",
-  headerCta: "Inscribirme",
-  promoSlide: {
-    kicker: "Inscripciones abiertas",
-    title: "Capacitaciones, demos y webinars técnicos",
-    body: "Agenda oficial Transworld para Chile y Perú. Elige una fecha, reserva tu cupo en un minuto y recibe tu código QR de acceso por correo.",
-    cta: "Ver próximas fechas",
+  hero: {
+    kicker: "Próximo evento",
+    allEvents: "Ver todos los eventos",
+    emptyTitle: "Agenda de eventos Transworld",
+    emptyText: "Pronto publicaremos nuevas fechas en Chile y Perú. Mientras tanto, revisa los eventos que ya realizamos.",
   },
   calendar: {
-    eyebrow: "Calendario",
-    title: "Agenda de eventos",
+    eyebrow: "Agenda",
+    title: "Próximos eventos",
   },
   galleryTeaser: {
     eyebrow: "Galería",
@@ -50,12 +49,6 @@ export const LANDING_CONTENT = {
     text: "Transmisiones de 45 minutos con nuestros especialistas y marcas representadas. Quedan grabadas para verlas cuando quieras.",
     cta: "Recibir avisos",
   },
-  cta: {
-    title: "¿Necesitas una capacitación para tu equipo?",
-    text: "Coordinamos sesiones técnicas en tus instalaciones o de forma remota, según tus proyectos.",
-    action: "Solicitar contacto",
-    href: mailto("Solicitud de capacitación para mi equipo"),
-  },
   subscribe: {
     title: "Suscríbete a la agenda",
     text: "Te avisamos cada vez que abrimos inscripciones para eventos, capacitaciones o webinars de tu interés.",
@@ -70,16 +63,12 @@ export const LANDING_CONTENT = {
         title: "Agenda",
         links: [
           { label: "Próximos eventos", href: "/#calendario" },
-          { label: "Webinars en vivo", href: "/webinars" },
-          { label: "Grabaciones", href: "/webinars#grabaciones" },
           { label: "Galería", href: "/galeria" },
         ],
       },
       {
         title: "Participar",
         links: [
-          { label: "Suscribirme a la agenda", href: "#suscribirme" },
-          { label: "Capacitación a medida", href: mailto("Capacitación a medida") },
           { label: "Visita al showroom", href: mailto("Visita al showroom") },
           { label: "Ser marca invitada", href: mailto("Postulación marca invitada") },
         ],

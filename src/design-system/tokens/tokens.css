@@ -13,13 +13,13 @@
 :root {
   /* ── Paleta base ─────────────────────────────────────────────── */
   --tw-navy-950: #152034; /* footer, overlay oscuro del hero */
-  --tw-navy-900: #12263a; /* títulos sobre blanco */
-  --tw-navy-700: #1f2f4e; /* hover navy */
-  --tw-navy-600: #293f68; /* marca */
+  --tw-navy-900: #16233c; /* títulos sobre blanco (ink de RegisPro) */
+  --tw-navy-700: #162b4c; /* hover navy (navy-900 de RegisPro) */
+  --tw-navy-600: #203e6d; /* marca: navy del logo, igual que la app RegisPro */
 
   --tw-lime-300: #b9e06a; /* kicker sobre navy */
-  --tw-lime-400: #aef839; /* acento */
-  --tw-lime-500: #a3d637; /* hover acento */
+  --tw-lime-400: #b1f22a; /* acento: lima del logo, igual que la app RegisPro */
+  --tw-lime-500: #a0de2a; /* hover acento (glow de RegisPro) */
   --tw-lime-600: #83b325; /* hover acento (formulario) */
 
   /* Oliva: texto sobre lime translúcido. Template: #4e7d0f / #5f8f14.
@@ -29,7 +29,7 @@
   --tw-gray-25: #fbfcfd;  /* fondo de inputs */
   --tw-gray-50: #f6f8fa;  /* hover de botones claros */
   --tw-gray-75: #f2f5f8;  /* chips de audiencia, código */
-  --tw-gray-100: #eef1f4; /* fondo base / divisores */
+  --tw-gray-100: #f2f5f9; /* fondo base / divisores (fondo de RegisPro) */
   --tw-gray-200: #dde3e9; /* borde de inputs */
   --tw-gray-300: #e4e9ee; /* rayado placeholder */
   --tw-gray-400: #9aa6b2; /* deshabilitado / decorativo (no apto para texto informativo) */
@@ -116,7 +116,7 @@
   --tw-header-bg: rgba(255, 255, 255, 0.86);
 
   /* ── Tipografía ──────────────────────────────────────────────── */
-  --tw-font-sans: "Montserrat", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --tw-font-sans: "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --tw-font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
 
   --tw-weight-light: 300;
@@ -188,11 +188,11 @@
   --tw-radius-md: 14px;   /* inputs, segmentado */
   --tw-radius-lg: 18px;   /* bloque de fecha */
   --tw-radius-xl: 22px;   /* stat card, tiles */
-  --tw-radius-2xl: 24px;  /* tarjetas de evento, webinars, media */
-  --tw-radius-2xl-plus: 26px; /* tarjetas informativas (detalle, formas de participar) */
-  --tw-radius-3xl: 28px;  /* paneles */
+  --tw-radius-2xl: 20px;  /* tarjetas de evento, webinars, media (como las de RegisPro) */
+  --tw-radius-2xl-plus: 22px; /* tarjetas informativas (detalle, formas de participar) */
+  --tw-radius-3xl: 24px;  /* paneles */
   --tw-radius-4xl: 30px;  /* modal, bandas CTA */
-  --tw-radius-5xl: 32px;  /* banner de detalle */
+  --tw-radius-5xl: 26px;  /* banner de detalle y hero de la portada */
   --tw-radius-pill: 999px;
 
   /* ── Sombras ─────────────────────────────────────────────────── */

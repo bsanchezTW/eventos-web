@@ -1,5 +1,5 @@
 /**
- * Agenda: calendario interactivo (mes, línea de producto, día y temporada completa). El HTML
+ * Agenda: lista de eventos filtrable (mes, línea de producto, día del calendario y realizados). El HTML
  * inicial llega del servidor; aquí se re-renderiza la región de resultados con los mismos
  * componentes pidiendo los datos a /api/eventos. La URL queda sincronizada (enlaces compartibles).
  */
@@ -24,8 +24,8 @@ function initExplorer() {
 
   /** @type {ExplorerQuery} */
   let query = parseExplorerQuery(new URLSearchParams(location.search));
-  /** Mes efectivo (si la URL no lo fija, lo resuelve el servidor). */
-  let resolvedMonth = monthTabs?.querySelector('[aria-pressed="true"]')?.getAttribute("data-month") ?? null;
+  /** Mes que muestra el calendario (el elegido o, sin mes, el del próximo evento). */
+  let calendarMonth = root.querySelector("[data-calendar-month]")?.getAttribute("data-calendar-month") ?? null;
   let requestId = 0;
   /** @type {AbortController | undefined} */
   let inflight;
@@ -56,10 +56,10 @@ function initExplorer() {
 
   /** @param {ExplorerResult} explorer @param {string | null} key */
   function render(explorer, key) {
-    resolvedMonth = explorer.query.month;
+    calendarMonth = explorer.calendar?.key ?? null;
     results.innerHTML = toHtml(ExplorerResults({ explorer }));
     monthTabs?.querySelectorAll("[data-month]").forEach((tab) => {
-      tab.setAttribute("aria-pressed", String(tab.getAttribute("data-month") === resolvedMonth));
+      tab.setAttribute("aria-pressed", String(tab.getAttribute("data-month") === (explorer.query.month ?? "")));
     });
     if (key === null) return;
     let target = /** @type {HTMLButtonElement | null} */ (key ? results.querySelector(key) : null);
@@ -101,7 +101,7 @@ function initExplorer() {
     const target = /** @type {Element} */ (event.target);
 
     const month = target.closest("[data-month]");
-    if (month) return void update({ month: month.getAttribute("data-month"), day: null });
+    if (month) return void update({ month: month.getAttribute("data-month") || null, day: null });
 
     const chip = target.closest("[data-explorer-chips] [data-category]");
     if (chip) {
@@ -112,14 +112,14 @@ function initExplorer() {
 
     // Template: clic en un día con eventos filtra; un segundo clic lo deselecciona.
     const day = target.closest("[data-explorer-calendar] [data-day]");
-    if (day && resolvedMonth) {
-      const key = `${resolvedMonth}-${String(day.getAttribute("data-day")).padStart(2, "0")}`;
-      return void update({ month: resolvedMonth, day: query.day === key ? null : key });
+    if (day && calendarMonth) {
+      const key = `${calendarMonth}-${String(day.getAttribute("data-day")).padStart(2, "0")}`;
+      return void update({ month: calendarMonth, day: query.day === key ? null : key });
     }
 
     const action = target.closest("[data-action]")?.getAttribute("data-action");
     if (action === "clear-filters") update({ q: "", categories: [], modality: "", city: "", day: null });
-    else if (action === "toggle-season") update({ all: !query.all });
+    else if (action === "toggle-past") update({ all: !query.all });
     else if (action === "retry") update();
   });
 }
