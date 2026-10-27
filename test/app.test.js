@@ -122,7 +122,9 @@ test("API: explorador, detalle, inscripción y suscripción", async () => {
   const created = await post("/api/eventos/webinar-cctv-analitica/inscripciones", person);
   assert.equal(created.status, 201);
   assert.equal((await created.json()).data.result, "inscrito");
-  assert.equal((await (await post("/api/eventos/webinar-cctv-analitica/inscripciones", person)).json()).data.result, "sin_cambios");
+  const repeated = await post("/api/eventos/webinar-cctv-analitica/inscripciones", person);
+  assert.equal(repeated.status, 409);
+  assert.equal((await repeated.json()).code, "already_registered");
 
   const invalid = await post("/api/eventos/webinar-cctv-analitica/inscripciones", { nombre: "Ana" });
   assert.equal(invalid.status, 422);

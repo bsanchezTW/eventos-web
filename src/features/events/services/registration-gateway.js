@@ -124,16 +124,10 @@ export function createMemoryRegistrationGateway({ eventService }) {
 
       // Igual que la base: un correo ya inscrito no se reinscribe (se ofrece modificar por enlace).
       if (current) return { ok: false, reason: "ya_inscrito", rejected: [] };
-      const alreadyIn = workshopCodes.filter((code) => current?.has(code));
-      const added = workshopCodes.filter((code) => !current?.has(code));
-      const codes = current ?? new Set();
-      if (!current) add(eventId);
-      for (const code of added) {
-        codes.add(code);
-        add(`${eventId}:${code}`);
-      }
-      people.set(personKey, codes);
-      return { ok: true, result: !current ? "inscrito" : added.length ? "actualizado" : "sin_cambios", added, alreadyIn, delivery: "programado" };
+      add(eventId);
+      for (const code of workshopCodes) add(`${eventId}:${code}`);
+      people.set(personKey, new Set(workshopCodes));
+      return { ok: true, result: "inscrito", added: workshopCodes, alreadyIn: [], delivery: "programado" };
     },
   };
 }

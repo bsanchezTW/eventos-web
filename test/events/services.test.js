@@ -62,7 +62,7 @@ test("getEventDetail: principal con talleres y taller con padre", async () => {
 });
 
 
-test("register: inscribe, el mismo correo suma talleres y los estados cerrados se rechazan", async () => {
+test("register: inscribe, el mismo correo no se reinscribe y los estados cerrados se rechazan", async () => {
   const { registrationService } = setup();
   const first = await registrationService.register("webinar-fttx-industrial", person);
   assert.deepEqual(first, {
@@ -74,7 +74,8 @@ test("register: inscribe, el mismo correo suma talleres y los estados cerrados s
     alreadyIn: [],
     delivery: "programado",
   });
-  assert.equal((await registrationService.register("webinar-fttx-industrial", person)).result, "sin_cambios");
+  // Igual que la base: el correo ya inscrito se ofrece modificar por enlace.
+  assert.deepEqual(await failure(registrationService.register("webinar-fttx-industrial", person)), [409, "already_registered"]);
 
   assert.deepEqual(await failure(registrationService.register("webinar-fttx-industrial", { ...person, email: "x" })), [422, "invalid"]);
   assert.deepEqual(await failure(registrationService.register("curso-fusion-empalme-fibra", person)), [409, "sold_out"]);
@@ -83,7 +84,7 @@ test("register: inscribe, el mismo correo suma talleres y los estados cerrados s
   assert.deepEqual(await failure(registrationService.register("nope", person)), [404, "not_found"]);
 });
 
-test("register: talleres del evento principal, desde el taller y actualizaciones", async () => {
+test("register: talleres del evento principal, desde el taller y correo ya inscrito", async () => {
   const { registrationService } = setup();
   const connect = "transworld-connect-2026";
   const withFttx = await registrationService.register(connect, { ...person, talleres: ["connect-taller-fttx"] });
@@ -91,14 +92,14 @@ test("register: talleres del evento principal, desde el taller y actualizaciones
   assert.deepEqual(withFttx.workshops, ["Taller: certificación FTTx en terreno"]);
 
   // Desde la página del taller: se inscribe en el evento padre con ese taller.
-  const fromWorkshop = await registrationService.register("connect-demo-cctv", person);
+  const fromWorkshop = await registrationService.register("connect-demo-cctv", { ...person, email: "otro@andes.cl" });
   assert.equal(fromWorkshop.eventId, connect);
-  assert.equal(fromWorkshop.result, "actualizado");
+  assert.equal(fromWorkshop.result, "inscrito");
   assert.equal(fromWorkshop.workshops.length, 1);
 
-  const again = await registrationService.register(connect, { ...person, talleres: ["connect-taller-fttx"] });
-  assert.equal(again.result, "sin_cambios");
-  assert.deepEqual(again.alreadyIn, ["Taller: certificación FTTx en terreno"]);
+  // Ya inscrito en el evento padre: ni desde el taller ni desde el principal se reinscribe.
+  assert.deepEqual(await failure(registrationService.register("connect-demo-cctv", person)), [409, "already_registered"]);
+  assert.deepEqual(await failure(registrationService.register(connect, { ...person, talleres: ["connect-taller-fttx"] })), [409, "already_registered"]);
 });
 
 test("register: taller sin cupo o con choque de horario", async () => {
